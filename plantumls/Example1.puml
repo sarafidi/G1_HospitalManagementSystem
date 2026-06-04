@@ -1,0 +1,471 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide circle
+skinparam linetype ortho
+skinparam {
+    shadowing false
+    RoundedCorner 10
+    ArrowThickness 1.5
+    DefaultFontSize 12
+    wrapWidth 200
+}
+
+skinparam class {
+    FontStyle bold
+    HeaderBackgroundColor<<controller>> #8F96FF
+    HeaderBackgroundColor<<JPanel>> Lavender
+    BorderColor<<controller>> RoyalBlue
+    ArrowColor<<controller>> RoyalBlue
+}
+
+'-----------------------------------------------------
+' ENUMS
+'-----------------------------------------------------
+
+enum Gender {
+    MALE
+    FEMALE
+    OTHER
+}
+
+enum Role {
+    ADMIN
+    DOCTOR
+    RECEPTIONIST
+}
+
+enum AppStatus {
+    SCHEDULED
+    CONFIRMED
+    COMPLETED
+    CANCELLED
+}
+
+'-----------------------------------------------------
+' DOMAIN MODELS
+'-----------------------------------------------------
+
+abstract class Person <<abstract>> {
+    -&#160;personId: String
+    -&#160;name: String
+    -&#160;age: int
+    -&#160;gender: String
+    -&#160;phone: String
+    -&#160;email: String
+    +&#160;getName(): String
+    +&#160;toString(): String
+}
+
+class Patient {
+    -&#160;patientId: String
+    -&#160;medicalHistory: String
+    -&#160;bloodType: String
+    -&#160;department: String
+    +&#160;getMedicalHistory(): String
+    +&#160;updateDetails(): void
+    +&#160;getInfo(): String
+}
+
+class Doctor {
+    -&#160;doctorId: String
+    -&#160;specialization: String
+    -&#160;licenseNo: String
+    -&#160;department: String
+    +&#160;getSchedule(): ArrayList<Appointment>
+    +&#160;getPatients(): ArrayList<Patient>
+    +&#160;getInfo(): String
+}
+
+class User {
+    -&#160;userId: String
+    -&#160;username: String
+    -&#160;name: String
+    -&#160;email: String
+    -&#160;phone: String
+    -&#160;passwordHash: String
+    -&#160;role: Role
+    -&#160;isActive: boolean
+    -&#160;isFirstLogin: boolean
+    -&#160;doctorId: String
+    -&#160;createdAt: LocalDateTime
+    +&#160;authenticate(): boolean
+    +&#160;hasPermission(): boolean
+}
+
+class Appointment {
+    -&#160;appointmentId: String
+    -&#160;patient: Patient
+    -&#160;doctor: Doctor
+    -&#160;dateTime: LocalDateTime
+    -&#160;status: AppStatus
+    -&#160;notes: String
+    -&#160;createdAt: LocalDateTime
+    +&#160;isSlotTaken(): boolean
+    +&#160;cancel(): void
+    +&#160;confirm(): void
+    +&#160;complete(): void
+}
+
+class MedicalNote {
+    -&#160;noteId: String
+    -&#160;appointment: Appointment
+    -&#160;doctor: Doctor
+    -&#160;patient: Patient
+    -&#160;diagnosis: String
+    -&#160;prescription: String
+    -&#160;createdAt: LocalDateTime
+    -&#160;updatedAt: LocalDateTime
+    +&#160;save(): void
+    +&#160;update(): void
+}
+
+'-----------------------------------------------------
+' EXCEPTION
+'-----------------------------------------------------
+
+package exception {
+    class DuplicateSlotException {
+        -&#160;message: String
+        +&#160;DuplicateSlotException()
+    }
+}
+
+DuplicateSlotException --|> RuntimeException
+
+'-----------------------------------------------------
+' INFRASTRUCTURE
+'-----------------------------------------------------
+
+class DbManager <<Singleton>> {
+    -&#160;instance: DbManager
+    -&#160;connection: Connection
+    +&#160;getInstance(): DbManager
+    +&#160;getConnection(): Connection
+    +&#160;executeQuery(): ResultSet
+    +&#160;executeUpdate(): int
+    +&#160;initSchema(): void
+}
+
+class SessionManager <<Singleton>> {
+    -&#160;loggedInUser: User
+    -&#160;loginTime: LocalDateTime
+    +&#160;getCurrentUser(): User
+    +&#160;setCurrentUser(): void
+    +&#160;isLoggedIn(): boolean
+    +&#160;clearSession(): void
+}
+
+'-----------------------------------------------------
+' UTILITIES
+'-----------------------------------------------------
+
+class HashUtil <<utility>> {
+    +&#160;sha256(): String
+    +&#160;verify(): boolean
+}
+
+class IdGenerator <<utility>> {
+    +&#160;generatePatientId(): String
+    +&#160;generateDoctorId(): String
+    +&#160;generateAppointmentId(): String
+    +&#160;generateUserId(): String
+    +&#160;generateNoteId(): String
+}
+
+class Validator <<utility>> {
+    +&#160;isValidEmail(): boolean
+    +&#160;isValidPhone(): boolean
+    +&#160;isNonEmpty(): boolean
+    +&#160;isValidAge(): boolean
+    +&#160;passwordsMatch(): boolean
+}
+
+'-----------------------------------------------------
+' CONTROLLERS
+'-----------------------------------------------------
+
+class AuthController <<controller>> {
+    -&#160;currentUser: User
+    +&#160;login(): User
+    +&#160;logout(): void
+    +&#160;getCurrentUser(): User
+}
+
+class UserController <<controller>> {
+    +&#160;addUser(): void
+    +&#160;deactivateUser(): void
+    +&#160;getAllUsers(): ArrayList<User>
+    +&#160;updatePassword(): void
+    +&#160;forcePasswordChange(): void
+}
+
+class PatientController <<controller>> {
+    +&#160;addPatient(): Patient
+    +&#160;updatePatient(): void
+    +&#160;getPatientById(): Patient
+    +&#160;getAllPatients(): ArrayList<Patient>
+    +&#160;searchPatient(): ArrayList<Patient>
+}
+
+class DoctorController <<controller>> {
+    +&#160;addDoctor(): Doctor
+    +&#160;getDoctorById(): Doctor
+    +&#160;getAllDoctors(): ArrayList<Doctor>
+    +&#160;updateSpecialization(): void
+}
+
+class AppointmentController <<controller>> {
+    +&#160;bookAppointment(): Appointment
+    +&#160;cancelAppointment(): void
+    +&#160;updateStatus(): void
+    +&#160;getAll(): ArrayList<Appointment>
+    +&#160;getByDoctor(): ArrayList<Appointment>
+    +&#160;isDuplicate(): boolean
+}
+
+class ReportController <<controller>> {
+    +&#160;getTotalPatients(): int
+    +&#160;getTotalAppointments(): int
+    +&#160;getDoctorSchedule(): ArrayList<String[]>
+    +&#160;getNotesByPatient(): ArrayList<MedicalNote>
+}
+
+class MedicalNoteController <<controller>> {
+    +&#160;addNote(): MedicalNote
+    +&#160;updateNote(n: void
+    +&#160;getNotesByAppt(): MedicalNote
+    +&#160;getNotesByPatient(): ArrayList<MedicalNote>
+}
+
+'-----------------------------------------------------
+' UI PANELS
+'-----------------------------------------------------
+
+class MainFrame <<JFrame>> {
+    -&#160;cardLayout: CardLayout
+    -&#160;navBar: JPanel
+    +&#160;switchPanel(): void
+    +&#160;applyRoleAccess(): void
+}
+
+class ChangePasswordDialog <<JDialog>> {
+    -&#160;txtOldPass: JPasswordField
+    -&#160;txtNewPass: JPasswordField
+    -&#160;txtConfirm: JPasswordField
+    -&#160;isForced: boolean
+    +&#160;handleSubmit(): void
+    +&#160;lockClose(): void
+}
+
+class LoginPanel <<JPanel>> {
+    -&#160;txtUsername: JTextField
+    -&#160;txtPassword: JPasswordField
+    +&#160;handleLogin(): void
+}
+
+class PatientPanel <<JPanel>> {
+    -&#160;patientTable: JTable
+    -&#160;formPanel: JPanel
+    +&#160;loadTable(): void
+    +&#160;handleAdd(): void
+    +&#160;handleUpdate(): void
+}
+
+class AppointmentPanel <<JPanel>> {
+    -&#160;apptTable: JTable
+    -&#160;dateTimePicker: JPanel
+    +&#160;loadTable(): void
+    +&#160;handleBook(): void
+    +&#160;handleCancel(): void
+    +&#160;handleStatusChange(): void
+}
+
+class DoctorPanel <<JPanel>> {
+    +&#160;loadTable(): void
+    +&#160;handleAdd(): void
+}
+
+class ReportPanel <<JPanel>> {
+    +&#160;loadStats(): void
+    +&#160;loadSchedule(): void
+}
+
+class MedicalNotePanel <<JPanel>> {
+    +&#160;loadNotes(): void
+    +&#160;handleSave(): void
+}
+
+class UserPanel <<JPanel>> {
+    +&#160;loadUsers(): void
+    +&#160;handleAdd(): void
+    +&#160;handleDeactivate(): void
+}
+
+'-----------------------------------------------------
+' LAYOUT HINTS
+'-----------------------------------------------------
+
+together {
+    class Patient
+    class Doctor
+    class Appointment
+    class MedicalNote
+}
+
+together {
+    class AuthController
+    class UserController
+    class PatientController
+    class DoctorController
+    class AppointmentController
+    class ReportController
+    class MedicalNoteController
+}
+
+together {
+    class PatientPanel
+    class AppointmentPanel
+    class DoctorPanel
+    class ReportPanel
+    class MedicalNotePanel
+    class UserPanel
+    class LoginPanel
+}
+
+together {
+    class AuthController
+    class UserController
+    class HashUtil
+    class SessionManager
+}
+
+together {
+    class AuthController
+    class LoginPanel
+}
+
+together {
+    class MedicalNotePanel
+    class MedicalNoteController
+    class ChangePasswordDialog
+}
+
+together {
+    class DoctorController
+    class AppointmentController
+    class DuplicateSlotException
+}
+
+together {
+    class PatientPanel
+    class PatientController
+}
+together {
+    class MedicalNotePanel
+    class MedicalNoteController
+}
+together {
+    class UserPanel
+    class UserController
+}
+
+'-----------------------------------------------------
+' RELATIONSHIPS
+'-----------------------------------------------------
+
+'' Enum usage
+'Person -left-> Gender: uses
+'User -up-> Role: uses
+'Appointment -up-> AppStatus: uses
+'Person -[hidden]down- AppStatus
+'
+''--- Inheritance ---
+'Person <|-down- Doctor
+'Person <|-down- Patient
+'
+'/'--- Domain Associations (using or referencing) ---
+'Note: Use -- for simple association, --> for dependency/direction'/
+'Patient "1 " -left- "0..* " Appointment
+'Doctor "1 " -right- "0..* " Appointment
+'Appointment "1 " *-- "0..1 " MedicalNote
+'Doctor "1 " -- "0..* " MedicalNote
+'Patient "1 " -- "0..* " MedicalNote
+'User "0..1 " -up- "0..1 " Doctor
+
+PatientController -[hidden]down- MedicalNoteController
+MedicalNoteController -[hidden]down- AuthController
+AuthController -[hidden]down- UserController
+UserController -[hidden]down- ReportController
+ReportController -[hidden]down- DoctorController
+DoctorController -[hidden]down- AppointmentController
+
+PatientPanel -[hidden]down- MedicalNotePanel
+MedicalNotePanel -[hidden]down- LoginPanel
+LoginPanel -[hidden]down- UserPanel
+UserPanel -[hidden]down- ReportPanel
+ReportPanel -[hidden]down- DoctorPanel
+DoctorPanel -[hidden]down- AppointmentPanel
+DbManager -[hidden]right- LoginPanel
+
+''--- UI Composition ---
+''MainFrame *-- PanelManager
+MainFrame *-right- "0..1"  ChangePasswordDialog
+MainFrame *-- LoginPanel
+MainFrame *-up- PatientPanel
+MainFrame *-- AppointmentPanel
+MainFrame *-- DoctorPanel
+MainFrame *-- ReportPanel
+MainFrame *-up- MedicalNotePanel
+MainFrame *-- UserPanel
+'
+''--- Panel -> Controller ---
+LoginPanel o-left- AuthController
+PatientPanel o-left- PatientController
+AppointmentPanel o-left- AppointmentController
+DoctorPanel o-left- DoctorController
+ReportPanel o-left- ReportController
+MedicalNotePanel o-left- MedicalNoteController
+UserPanel o-- UserController
+'AppointmentController -[hidden]left- DoctorController
+'ChangePasswordDialog -[hidden]left- PatientPanel
+'ChangePasswordDialog -[hidden]left- MedicalNotePanel
+''DoctorPanel -[hidden]right- ReportController
+PatientController -[hidden]right- PatientPanel
+MedicalNoteController -[hidden]right- MedicalNotePanel
+UserController -[hidden]right- UserPanel
+
+'
+''--- Controller -> infrastructure ---
+AuthController o--- DbManager : uses
+UserController o--- DbManager : uses
+PatientController o-- DbManager : uses
+DoctorController o-- DbManager : uses
+AppointmentController o-left- DbManager : uses
+ReportController o-up- DbManager : uses
+MedicalNoteController o-- DbManager : uses
+'
+''--- Auth ---
+AuthController -right-> SessionManager : uses
+AuthController .down.> HashUtil : uses
+UserController .up.> HashUtil : uses
+'
+''Exception
+AppointmentController ..> DuplicateSlotException : throws
+
+''MainFrame -[hidden]up- IdGenerator
+' Add these new dependency lines
+'PatientController ..> IdGenerator : uses
+''DoctorController ..> IdGenerator : uses
+''AppointmentController ..> IdGenerator : uses
+''UserController ..> IdGenerator : uses
+''MedicalNoteController ..> IdGenerator : uses
+
+'LoginPanel .right.> Validator : uses
+'PatientPanel ..> Validator : uses
+'DoctorPanel .up.> Validator : uses
+'AppointmentPanel ..> Validator : uses
+'ChangePasswordDialog ..> Validator : uses
+'UserPanel ..> Validator : uses
+'Validator -[hidden]left LoginPanel
+
+@enduml

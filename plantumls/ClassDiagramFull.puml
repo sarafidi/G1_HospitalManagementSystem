@@ -1,0 +1,395 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide circle
+'left to right direction
+skinparam linetype ortho
+skinparam {
+    shadowing false
+    RoundedCorner 10
+    ArrowThickness 1.5
+    DefaultFontSize 12
+    wrapWidth 200
+}
+
+skinparam class {
+    FontStyle bold
+    HeaderBackgroundColor<<controller>> #8F96FF
+    HeaderBackgroundColor<<JPanel>> Lavender
+    BorderColor<<controller>> RoyalBlue
+    ArrowColor<<controller>> RoyalBlue
+}
+
+'-----------------------------------------------------
+' ENUMS
+'-----------------------------------------------------
+
+enum Gender {
+    MALE
+    FEMALE
+    OTHER
+}
+
+enum Role {
+    ADMIN
+    DOCTOR
+    RECEPTIONIST
+}
+
+enum AppStatus {
+    SCHEDULED
+    CONFIRMED
+    COMPLETED
+    CANCELLED
+}
+
+'-----------------------------------------------------
+' DOMAIN MODELS
+'-----------------------------------------------------
+
+abstract class Person <<abstract>> {
+    -&#160;personId: String
+    -&#160;name: String
+    -&#160;age: int
+    -&#160;gender: String
+    -&#160;phone: String
+    -&#160;email: String
+    +&#160;getName(): String
+    +&#160;toString(): String
+}
+
+class Patient {
+    -&#160;patientId: String
+    -&#160;medicalHistory: String
+    -&#160;bloodType: String
+    -&#160;department: String
+    +&#160;getMedicalHistory(): String
+    +&#160;updateDetails(name: String, age: int, gender: Gender, phone: String, email: String, bloodType: String, medicalHistory: String): void
+    +&#160;getInfo(): String
+}
+
+class Doctor {
+    -&#160;doctorId: String
+    -&#160;specialization: String
+    -&#160;licenseNo: String
+    -&#160;department: String
+    +&#160;getSchedule(): ArrayList<Appointment>
+    +&#160;getPatients(): ArrayList<Patient>
+    +&#160;getInfo(): String
+}
+
+class User {
+    -&#160;userId: String
+    -&#160;username: String
+    -&#160;name: String
+    -&#160;email: String
+    -&#160;phone: String
+    -&#160;passwordHash: String
+    -&#160;role: Role
+    -&#160;isActive: boolean
+    -&#160;isFirstLogin: boolean
+    -&#160;doctorId: String
+    -&#160;createdAt: LocalDateTime
+    +&#160;authenticate(inputPassword: String): boolean
+    +&#160;hasPermission(requiredRole: Role): boolean
+}
+
+class Appointment {
+    -&#160;appointmentId: String
+    -&#160;patient: Patient
+    -&#160;doctor: Doctor
+    -&#160;dateTime: LocalDateTime
+    -&#160;status: AppStatus
+    -&#160;notes: String
+    -&#160;createdAt: LocalDateTime
+    +&#160;isSlotTaken(doctorId: String, dateTime: LocalDateTime): boolean
+    +&#160;cancel(): void
+    +&#160;confirm(): void
+    +&#160;complete(): void
+}
+
+class MedicalNote {
+    -&#160;noteId: String
+    -&#160;appointment: Appointment
+    -&#160;doctor: Doctor
+    -&#160;patient: Patient
+    -&#160;diagnosis: String
+    -&#160;prescription: String
+    -&#160;createdAt: LocalDateTime
+    -&#160;updatedAt: LocalDateTime
+    +&#160;save(): void
+    +&#160;update(diagnosis: String, prescription: String): void
+}
+
+'-----------------------------------------------------
+' EXCEPTION
+'-----------------------------------------------------
+
+package exception {
+    class DuplicateSlotException {
+        -&#160;message: String
+        +&#160;DuplicateSlotException(msg: String)
+    }
+}
+
+DuplicateSlotException --|> RuntimeException
+
+'-----------------------------------------------------
+' INFRASTRUCTURE
+'-----------------------------------------------------
+
+class DbManager <<Singleton>> {
+    -&#160;instance: DbManager
+    -&#160;connection: Connection
+    +&#160;getInstance(): DbManager
+    +&#160;getConnection(): Connection
+    +&#160;executeQuery(): ResultSet
+    +&#160;executeUpdate(): int
+    +&#160;initSchema(): void
+}
+
+class SessionManager <<Singleton>> {
+    -&#160;loggedInUser: User
+    -&#160;loginTime: LocalDateTime
+    +&#160;getCurrentUser(): User
+    +&#160;setCurrentUser(user: User): void
+    +&#160;isLoggedIn(): boolean
+    +&#160;clearSession(): void
+}
+
+'-----------------------------------------------------
+' UTILITIES
+'-----------------------------------------------------
+
+class HashUtil <<utility>> {
+    +&#160;sha256(String input): String
+    +&#160;verify(String raw, String passwordHash): boolean
+}
+
+class IdGenerator <<utility>> {
+    +&#160;generatePatientId(): String
+    +&#160;generateDoctorId(): String
+    +&#160;generateAppointmentId(): String
+    +&#160;generateUserId(): String
+    +&#160;generateNoteId(): String
+}
+
+class Validator <<utility>> {
+    +&#160;isValidEmail(email: String): boolean
+    +&#160;isValidPhone(phone: String): boolean
+    +&#160;isNonEmpty(value: String): boolean
+    +&#160;isValidAge(age: int): boolean
+    +&#160;passwordsMatch(p1: String, p2: String): boolean
+}
+
+'-----------------------------------------------------
+' CONTROLLERS
+'-----------------------------------------------------
+
+class AuthController <<controller>> {
+    -&#160;currentUser: User
+    +&#160;login(username: String, password: String): User
+    +&#160;logout(): void
+    +&#160;getCurrentUser(): User
+}
+
+class UserController <<controller>> {
+    +&#160;addUser(username: String, name: String, email: String, phone: String, role: Role, tempPassword: String): void
+    +&#160;deactivateUser(userId: String): void
+    +&#160;getAllUsers(): ArrayList<User>
+    +&#160;updatePassword(userId: String, newPassword: String): void
+    +&#160;forcePasswordChange(userId: String): void
+}
+
+class PatientController <<controller>> {
+    +&#160;addPatient(name: String, age: int, gender: Gender, phone: String, email: String, bloodType: String, medicalHistory: String): Patient
+    +&#160;updatePatient(patientId: String, name: String, age: int, gender: Gender, phone: String, email: String, bloodType: String, medicalHistory: String): void
+    +&#160;getPatientById(patientId: String): Patient
+    +&#160;getAllPatients(): ArrayList<Patient>
+    +&#160;searchPatient(keyword: String): ArrayList<Patient>
+}
+
+class DoctorController <<controller>> {
+    +&#160;addDoctor(name: String, age: int, gender: Gender, phone: String, email: String, specialization: String, licenseNo: String, department: String): Doctor
+    +&#160;getDoctorById(doctorId: String): Doctor
+    +&#160;getAllDoctors(): ArrayList<Doctor>
+    +&#160;updateSpecialization(doctorId: String, specialization: String, department: String): void
+}
+
+class AppointmentController <<controller>> {
+    +&#160;bookAppointment(patientId: String, doctorId: String, dateTime: LocalDateTime, notes: String): Appointment
+    +&#160;cancelAppointment(appointmentId: String): void
+    +&#160;updateStatus(appointmentId: String, status: AppStatus): void
+    +&#160;getAll(): ArrayList<Appointment>
+    +&#160;getByDoctor(doctorId: String): ArrayList<Appointment>
+    +&#160;isDuplicate(doctorId: String, dateTime: LocalDateTime): boolean
+}
+
+class ReportController <<controller>> {
+    +&#160;getTotalPatients(): int
+    +&#160;getTotalAppointments(): int
+    +&#160;getDoctorSchedule(): ArrayList<String[]>
+    +&#160;getNotesByPatient(patientId: String): ArrayList<MedicalNote>
+}
+
+class MedicalNoteController <<controller>> {
+    +&#160;addNote(appointmentId: String, doctorId: String, patientId: String, diagnosis: String, prescription: String): MedicalNote
+    +&#160;updateNote(noteId: String, diagnosis: String, prescription: String): void
+    +&#160;getNotesByAppt(appointmentId: String): MedicalNote
+    +&#160;getNotesByPatient(patientId: String): ArrayList<MedicalNote>
+}
+
+'-----------------------------------------------------
+' UI PANELS
+'-----------------------------------------------------
+
+class MainFrame <<JFrame>> {
+    -&#160;cardLayout: CardLayout
+    -&#160;navBar: JPanel
+    +&#160;switchPanel(name: String): void
+    +&#160;applyRoleAccess(): void
+}
+
+class ChangePasswordDialog <<JDialog>> {
+    -&#160;txtOldPass: JPasswordField
+    -&#160;txtNewPass: JPasswordField
+    -&#160;txtConfirm: JPasswordField
+    -&#160;isForced: boolean
+    +&#160;handleSubmit(): void
+    +&#160;lockClose(): void
+}
+
+class LoginPanel <<JPanel>> {
+    -&#160;txtUsername: JTextField
+    -&#160;txtPassword: JPasswordField
+    +&#160;handleLogin(): void
+}
+
+class PatientPanel <<JPanel>> {
+    -&#160;patientTable: JTable
+    -&#160;formPanel: JPanel
+    +&#160;loadTable(): void
+    +&#160;handleAdd(): void
+    +&#160;handleUpdate(): void
+}
+
+class AppointmentPanel <<JPanel>> {
+    -&#160;apptTable: JTable
+    -&#160;dateTimePicker: JPanel
+    +&#160;loadTable(): void
+    +&#160;handleBook(): void
+    +&#160;handleCancel(): void
+    +&#160;handleStatusChange(): void
+}
+
+class DoctorPanel <<JPanel>> {
+    +&#160;loadTable(): void
+    +&#160;handleAdd(): void
+}
+
+class ReportPanel <<JPanel>> {
+    +&#160;loadStats(): void
+    +&#160;loadSchedule(): void
+}
+
+class MedicalNotePanel <<JPanel>> {
+    +&#160;loadNotes(): void
+    +&#160;handleSave(): void
+}
+
+class UserPanel <<JPanel>> {
+    +&#160;loadUsers(): void
+    +&#160;handleAdd(): void
+    +&#160;handleDeactivate(): void
+}
+
+'-----------------------------------------------------
+' LAYOUT HINTS
+'-----------------------------------------------------
+
+together {
+    class Patient
+    class Doctor
+    class Appointment
+    class MedicalNote
+}
+
+together {
+    class AuthController
+    class UserController
+    class PatientController
+    class DoctorController
+    class AppointmentController
+    class ReportController
+    class MedicalNoteController
+}
+
+together {
+    class LoginPanel
+    class PatientPanel
+    class AppointmentPanel
+    class DoctorPanel
+    class ReportPanel
+    class MedicalNotePanel
+    class UserPanel
+}
+
+'-----------------------------------------------------
+' RELATIONSHIPS
+'-----------------------------------------------------
+
+' Enum usage
+Person -left-> Gender: uses
+User -up-> Role: uses
+'Appointment --> AppStatus: uses
+
+'--- Inheritance ---
+Person <|-down- Doctor
+Person <|-down- Patient
+
+/'--- Domain Associations (using or referencing) ---
+Note: Use -- for simple association, --> for dependency/direction'/
+Patient "1 " -- "0..* " Appointment
+Doctor "1 " -- "0..* " Appointment
+Appointment "1 " *-- "0..1 " MedicalNote
+Doctor "1 " -- "0..* " MedicalNote
+Patient "1 " -- "0..* " MedicalNote
+User "0..1 " -right- "0..1 " Doctor
+
+'--- UI Composition ---
+'MainFrame *-- PanelManager
+MainFrame *-- "0..1"  ChangePasswordDialog
+MainFrame *-right-  LoginPanel
+MainFrame *--  PatientPanel
+MainFrame *--  AppointmentPanel
+MainFrame *--  DoctorPanel
+MainFrame *--  ReportPanel
+MainFrame *--  MedicalNotePanel
+MainFrame *--  UserPanel
+
+'--- Panel -> Controller ---
+LoginPanel o-- AuthController
+PatientPanel o-- PatientController
+AppointmentPanel o-- AppointmentController
+DoctorPanel o-- DoctorController
+ReportPanel o-- ReportController
+MedicalNotePanel o-- MedicalNoteController
+UserPanel o-- UserController
+
+'--- Controller -> infrastructure ---
+AuthController o-- DbManager : uses
+UserController o-- DbManager : uses
+PatientController o-- DbManager : uses
+DoctorController o-- DbManager : uses
+AppointmentController o-- DbManager : uses
+ReportController o-- DbManager : uses
+MedicalNoteController o-- DbManager : uses
+
+'--- Auth ---
+AuthController --> SessionManager : uses
+AuthController o-- HashUtil : uses
+UserController o-- HashUtil : uses
+
+'Exception
+AppointmentController ..> DuplicateSlotException : throws
+
+@enduml
