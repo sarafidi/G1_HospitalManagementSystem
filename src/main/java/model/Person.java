@@ -4,12 +4,12 @@ public abstract class Person {
     // private fields
     private String name;
     private int age;
-    private String gender;
+    private Gender gender;
     private String phone;
     private String email;
 
     // constructor
-    public Person(String name, int age, String gender, String phone, String email) {
+    public Person(String name, int age, Gender gender, String phone, String email) {
         this.name = name;
         this.age = age;
         this.gender = gender;
@@ -20,7 +20,7 @@ public abstract class Person {
     // getters
     public String getName() { return name; }
     public int getAge() { return age; }
-    public String getGender() { return gender; }
+    public Gender getGender() { return gender; }
     public String getPhone() { return phone; }
     public String getEmail() { return email; }
 
