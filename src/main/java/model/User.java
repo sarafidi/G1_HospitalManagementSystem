@@ -1,5 +1,7 @@
 package model;
 
+import util.HashUtil;
+
 public class User {
     // private fields
     private String userId;
@@ -53,7 +55,7 @@ public class User {
 
     // TODO: use HashUtil.verify(inputPassword, this.passwordHash) once HashUtil class is done
     public boolean authenticate(String inputPassword) {
-        return false;
+        return HashUtil.verify(inputPassword, this.passwordHash);
     }
 
     public boolean hasPermission(Role requiredRole) {
