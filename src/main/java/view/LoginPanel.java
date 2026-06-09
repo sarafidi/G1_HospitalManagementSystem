@@ -64,7 +64,7 @@ public class LoginPanel extends JPanel {
 
     private void handleLogin() {
         String usernameEntered = usernameField.getText();
-        String passwordEntered = String.valueOf(passwordField.getPassword());
+        String passwordEntered = new String(passwordField.getPassword());
 
         if (!Validator.isNonEmpty(usernameEntered)) {
             errorLabel.setText("Username should not be empty!");
