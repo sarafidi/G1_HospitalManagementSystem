@@ -87,7 +87,7 @@ public class UserController {
         return null;
     }
 
-    public User findByUserId(String userId) {
+    private User findByUserId(String userId) {
         return users.stream()
                 .filter(u -> u.getUserId().equals(userId))
                 .findFirst()
