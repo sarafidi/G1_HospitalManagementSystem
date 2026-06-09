@@ -1,0 +1,36 @@
+package controller;
+
+import java.util.ArrayList;
+import model.*;
+import util.DataStore;
+import util.SessionManager;
+
+public class AuthController {
+    private ArrayList<User> users = DataStore.getInstance().getUsers();
+
+    public User login(String username, String password) {
+        User currUser = findByUsername(username);
+        if (currUser == null) { return null; }
+        if(currUser.authenticate(password)) {
+            SessionManager.getInstance().setCurrentUser(currUser);
+            return currUser;
+        }
+        return null;
+    }
+
+    public void logout() {
+        SessionManager.getInstance().clearSession();
+    }
+
+    public User getCurrentUser() {
+        return SessionManager.getInstance().getCurrentUser();
+    }
+
+    public User findByUsername(String username) {
+        return users.stream()
+                .filter(u -> u.getUsername().equalsIgnoreCase(username) && u.isActive())
+                .findFirst()
+                .orElse(null);
+    }
+
+}
