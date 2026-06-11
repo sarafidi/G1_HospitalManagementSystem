@@ -53,7 +53,6 @@ public class User {
     public void setFirstLogin(boolean firstLogin) { isFirstLogin = firstLogin; }
     public void setDoctorId(String doctorId) { this.doctorId = doctorId; }
 
-    // TODO: use HashUtil.verify(inputPassword, this.passwordHash) once HashUtil class is done
     public boolean authenticate(String inputPassword) {
         return HashUtil.verify(inputPassword, this.passwordHash);
     }
