@@ -33,3 +33,6 @@ bin/
 
 ### DB Setup ###
 /data/
+
+### Build Files ###
+!**/target
