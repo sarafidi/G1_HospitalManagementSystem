@@ -13,8 +13,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class DataStore {
+
     private static DataStore instance;
-    
+
     // five on-memory lists
     private ArrayList<User> users;
     private ArrayList<Patient> patients;
@@ -38,17 +39,19 @@ public class DataStore {
         }
         return instance;
     }
-    
+
     public void init() {
         // creates `data/` folder if it doesnt exists
         // loads each json file into matching list
         // if users.json is empty, seeds the default admin account
         createDataFolder();
         loadAll();
-        if (users.isEmpty()) { seedAdmin(); }
+        if (users.isEmpty()) {
+            seedAdmin();
+        }
     }
-    
-    private void createDataFolder () {
+
+    private void createDataFolder() {
         File folder = new File("data/");
         if (!folder.exists() && !folder.isDirectory()) {
             folder.mkdirs();
@@ -56,11 +59,16 @@ public class DataStore {
     }
 
     private void loadAll() {
-        users = loadList("data/users.json", new TypeToken<ArrayList<User>>(){}.getType());
-        patients = loadList("data/patients.json", new TypeToken<ArrayList<Patient>>(){}.getType());
-        doctors = loadList("data/doctors.json", new TypeToken<ArrayList<Doctor>>(){}.getType());
-        appointments = loadList("data/appointments.json", new TypeToken<ArrayList<Appointment>>(){}.getType());
-        medicalNotes = loadList("data/medical_notes.json", new TypeToken<ArrayList<MedicalNote>>(){}.getType());
+        users = loadList("data/users.json", new TypeToken<ArrayList<User>>() {
+        }.getType());
+        patients = loadList("data/patients.json", new TypeToken<ArrayList<Patient>>() {
+        }.getType());
+        doctors = loadList("data/doctors.json", new TypeToken<ArrayList<Doctor>>() {
+        }.getType());
+        appointments = loadList("data/appointments.json", new TypeToken<ArrayList<Appointment>>() {
+        }.getType());
+        medicalNotes = loadList("data/medical_notes.json", new TypeToken<ArrayList<MedicalNote>>() {
+        }.getType());
     }
 
     private <T> ArrayList<T> loadList(String path, Type type) {
@@ -100,15 +108,43 @@ public class DataStore {
     }
 
     // getters
-    public ArrayList<User> getUsers() { return users; }
-    public ArrayList<Patient> getPatients() { return patients; }
-    public ArrayList<Doctor> getDoctors() { return doctors; }
-    public ArrayList<Appointment> getAppointments() { return appointments; }
-    public ArrayList<MedicalNote> getMedicalNotes() { return medicalNotes; }
+    public ArrayList<User> getUsers() {
+        return users;
+    }
 
-    public void saveUsers() { saveList("data/users.json", users); }
-    public void savePatients() { saveList("data/patients.json", patients); }
-    public void saveDoctors() { saveList("data/doctors.json", doctors); }
-    public void saveAppointments() { saveList("data/appointments.json", appointments); }
-    public void saveMedicalNotes() { saveList("data/medical_notes.json", medicalNotes); }
+    public ArrayList<Patient> getPatients() {
+        return patients;
+    }
+
+    public ArrayList<Doctor> getDoctors() {
+        return doctors;
+    }
+
+    public ArrayList<Appointment> getAppointments() {
+        return appointments;
+    }
+
+    public ArrayList<MedicalNote> getMedicalNotes() {
+        return medicalNotes;
+    }
+
+    public void saveUsers() {
+        saveList("data/users.json", users);
+    }
+
+    public void savePatients() {
+        saveList("data/patients.json", patients);
+    }
+
+    public void saveDoctors() {
+        saveList("data/doctors.json", doctors);
+    }
+
+    public void saveAppointments() {
+        saveList("data/appointments.json", appointments);
+    }
+
+    public void saveMedicalNotes() {
+        saveList("data/medical_notes.json", medicalNotes);
+    }
 }
