@@ -1,16 +1,25 @@
 package view;
 
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Dimension;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
 import controller.AuthController;
 import controller.UserController;
 import model.Role;
 import model.User;
 import util.SessionManager;
 
-import javax.swing.*;
-import java.awt.*;
-
-
 public class MainFrame extends JFrame {
+
     // CardLayout — switches between panels by name
     // reason: cleaner than removing/adding components dynamically
     private CardLayout cardLayout;
@@ -113,8 +122,7 @@ public class MainFrame extends JFrame {
         doctorPanel = new JPanel(new BorderLayout());
         doctorPanel.add(new JLabel("Doctors - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
 
-        reportPanel = new JPanel(new BorderLayout());
-        reportPanel.add(new JLabel("Reports - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
+        reportPanel = new ReportPanel();
 
         medicalNotePanel = new JPanel(new BorderLayout());
         medicalNotePanel.add(new JLabel("Medical Notes - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
