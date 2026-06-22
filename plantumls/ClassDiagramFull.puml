@@ -225,10 +225,15 @@ class AppointmentController <<controller>> {
 }
 
 class ReportController <<controller>> {
-    +&#160;getTotalPatients(): int
-    +&#160;getTotalAppointments(): int
-    +&#160;getDoctorSchedule(): ArrayList<String[]>
-    +&#160;getNotesByPatient(patientId: String): ArrayList<MedicalNote>
+    + getTotalPatients(): int
+    + getTotalAppointments(): int
+    + getTotalAppointmentsByStatus(status: String): int
+    + getDoctorSchedule(): ArrayList<String[]>
+    + getFilteredDoctorSchedule(doctorId: String, status: String, period: String, patientSearch: String): ArrayList<String[]>
+    + getAllDoctors(): ArrayList<Doctor>
+    + getAllStatuses(): String[]
+    + getPeriodOptions(): String[]
+    + getNotesByPatient(patientId: String): ArrayList<MedicalNote>
 }
 
 class MedicalNoteController <<controller>> {
@@ -287,8 +292,42 @@ class DoctorPanel <<JPanel>> {
 }
 
 class ReportPanel <<JPanel>> {
-    +&#160;loadStats(): void
-    +&#160;loadSchedule(): void
+    - reportController: ReportController
+    - scheduleTable: JTable
+    - tableModel: DefaultTableModel
+    - totalPatientsLabel: JLabel
+    - totalAppointmentsLabel: JLabel
+    - totalScheduledLabel: JLabel
+    - totalCompletedLabel: JLabel
+    - lastUpdatedLabel: JLabel
+    - doctorScheduleTitleLabel: JLabel
+    - patientFilterDisplayLabel: JLabel
+    - resultsCountLabel: JLabel
+    - refreshButton: JButton
+    - printButton: JButton
+    - contentPanel: JPanel
+    - filterDoctorCombo: JComboBox<String>
+    - filterStatusCombo: JComboBox<String>
+    - filterPeriodCombo: JComboBox<String>
+    - searchPatientField: JTextField
+    - filterButton: JButton
+    - clearFilterButton: JButton
+    - allDoctors: ArrayList<Doctor>
+    + ReportPanel()
+    + loadStats(): void
+    + loadSchedule(): void
+    + applyFilters(): void
+    + clearFilters(): void
+    - loadAllData(): void
+    - populateDoctorDropdown(): void
+    - getDoctorIdByName(doctorName: String): String
+    - updateScheduleTitle(doctorName: String, patientName: String): void
+    - updateResultsCount(): void
+    - updateTimestamp(): void
+    - checkRoleAccess(): void
+    - showAccessDeniedDialog(message: String): void
+    - printReport(): void
+    - createPrintPanel(): JPanel
 }
 
 class MedicalNotePanel <<JPanel>> {
@@ -341,6 +380,10 @@ together {
 Person -left-> Gender: uses
 User -up-> Role: uses
 'Appointment --> AppStatus: uses
+ReportPanel o-- ReportController : uses 
+ReportPanel ..> SessionManager : uses
+ReportPanel ..> DataStore : uses
+ReportController ..> DataStore : uses
 
 '--- Inheritance ---
 Person <|-down- Doctor
