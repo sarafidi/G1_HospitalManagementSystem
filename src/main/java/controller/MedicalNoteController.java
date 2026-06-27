@@ -9,20 +9,16 @@ public class MedicalNoteController {
     private List<MedicalNote> notesList;
 
     public MedicalNoteController() {
-        // Sepatutnya pancing dari DataStore JSON korang, buat masa ni kita simpan dalam Memory List dulu
         this.notesList = new ArrayList<>();
     }
 
-    // Fungsi untuk hantar/simpan Medical Note baharu
+    // Save or update a medical note
     public void submitMedicalNote(MedicalNote note) {
-        // Cek kalau dah wujud nota untuk Appt ID ni (elak duplicate), kita remove yang lama dan ganti baru
         notesList.removeIf(n -> n.getAppointmentId().equals(note.getAppointmentId()));
-        notesList.add(note);
-        
-        // TODO: Sarafina/Putra punya DataStore.saveMedicalNotes(notesList) panggil kat sini kalau ada
+        notesList.add(note);        
     }
 
-    // Fungsi untuk update Medical Note sedia ada
+    // Update an existing medical note
     public void updateMedicalNote(MedicalNote note) {
         for (int i = 0; i < notesList.size(); i++) {
             if (notesList.get(i).getAppointmentId().equals(note.getAppointmentId())) {
@@ -30,15 +26,14 @@ public class MedicalNoteController {
                 break;
             }
         }
-        // TODO: Panggil DataStore JSON untuk simpan perubahan
     }
 
-    // Ambil semua senarai nota perubatan
+    // Retrieve all medical notes
     public List<MedicalNote> getAllMedicalNotes() {
         return notesList;
     }
 
-    // Cari nota spesifik berdasarkan Appointment ID
+    // Retrieve a medical note by appointment ID
     public MedicalNote getNoteByAppointmentId(String apptId) {
         for (MedicalNote note : notesList) {
             if (note.getAppointmentId().equals(apptId)) {
