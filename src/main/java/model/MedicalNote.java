@@ -32,6 +32,7 @@ public class MedicalNote {
 
     // Getters
     public String getNoteId() { return noteId; }
+    public String getMedicalNoteId() { return noteId; }
     public String getAppointmentId() { return appointmentId; }
     public String getDoctorId() { return doctorId; }
     public String getPatientId() { return patientId; }

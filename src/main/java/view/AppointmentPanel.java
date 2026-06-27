@@ -7,7 +7,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -127,7 +126,7 @@ public class AppointmentPanel extends JPanel {
                 appt.getAppointmentId(),
                 appt.getPatientId(),
                 appt.getDoctorId(),
-                appt.getAppointmentDateTime().toString().replace("T", " "),
+                appt.getAppointmentDateTime(),
                 appt.getStatus(),
                 appt.getNotes()
             };
@@ -153,11 +152,11 @@ public class AppointmentPanel extends JPanel {
             // Parse date and time into LocalDateTime
             LocalDate date = LocalDate.parse(dateStr);
             LocalTime time = LocalTime.parse(timeStr);
-            LocalDateTime dateTime = LocalDateTime.of(date, time);
+            String dateTimeStr = date.toString() + " " + time.toString();
 
             // Generate a unique appointment ID
             String apptId = "APT-" + System.currentTimeMillis() % 10000; 
-            Appointment newAppt = new Appointment(apptId, pId, dId, dateTime, AppStatus.SCHEDULED, notes);
+            Appointment newAppt = new Appointment(apptId, pId, dId, dateTimeStr, AppStatus.SCHEDULED, notes);
             controller.bookAppointment(newAppt);
 
             loadTableData();
@@ -172,7 +171,11 @@ public class AppointmentPanel extends JPanel {
         } catch (DuplicateSlotException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Duplicate Slot", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Invalid date format! Please use YYYY-MM-DD.", "Format Error", JOptionPane.ERROR_MESSAGE);
+            // Ini untuk kita nampak error sebenar kat terminal bawah VS Code
+            ex.printStackTrace(); 
+            
+            // Mesej popup sementara untuk tengok error
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Debugging", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

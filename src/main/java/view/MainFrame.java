@@ -113,8 +113,7 @@ public class MainFrame extends JFrame {
         loginPanel = new LoginPanel(authController, () -> onLoginSuccess());
         userPanel = new UserPanel(userController);
 
-        appointmentPanel = new JPanel(new BorderLayout());
-        appointmentPanel.add(new JLabel("Appointments - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
+        appointmentPanel = new view.AppointmentPanel();
 
         patientPanel = new JPanel(new BorderLayout());
         patientPanel.add(new JLabel("Patients - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
@@ -124,8 +123,7 @@ public class MainFrame extends JFrame {
 
         reportPanel = new ReportPanel();
 
-        medicalNotePanel = new JPanel(new BorderLayout());
-        medicalNotePanel.add(new JLabel("Medical Notes - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
+        medicalNotePanel = new view.MedicalNotePanel();
 
         cardPanel.add(loginPanel, "LOGIN");
         cardPanel.add(userPanel, "USER_MANAGEMENT");

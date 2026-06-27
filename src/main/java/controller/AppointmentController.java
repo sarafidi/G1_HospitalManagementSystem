@@ -1,6 +1,5 @@
 package controller;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class AppointmentController {
     }
 
     // Duplicate Check
-    public boolean isDuplicate(String doctorId, LocalDateTime dateTime) {
+    public boolean isDuplicate(String doctorId, String dateTime) {
         for (Appointment appt : dataStore.getAppointments()) {
             if (appt.getDoctorId().equalsIgnoreCase(doctorId) && 
                 appt.getAppointmentDateTime().equals(dateTime) && 

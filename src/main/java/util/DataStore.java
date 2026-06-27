@@ -2,6 +2,13 @@ package util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -10,6 +17,7 @@ import java.lang.reflect.Type;
 import model.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 public class DataStore {
@@ -71,10 +79,28 @@ public class DataStore {
         }.getType());
     }
 
+    private Gson createGson() {
+        return new GsonBuilder()
+                .setPrettyPrinting()
+                .registerTypeAdapter(LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
+                    @Override
+                    public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+                        return new JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    }
+                })
+                .registerTypeAdapter(LocalDateTime.class, new JsonDeserializer<LocalDateTime>() {
+                    @Override
+                    public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                        return LocalDateTime.parse(json.getAsString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                    }
+                })
+                .create();
+    }
+
     private <T> ArrayList<T> loadList(String path, Type type) {
         try {
             FileReader file = new FileReader(path);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            Gson gson = createGson();
             ArrayList<T> result = gson.fromJson(file, type);
             file.close();
             return result != null ? result : new ArrayList<T>();
@@ -86,7 +112,7 @@ public class DataStore {
     private void saveList(String path, Object list) {
         try {
             FileWriter file = new FileWriter(path);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            Gson gson = createGson();
             gson.toJson(list, file);
             file.close();
         } catch (IOException e) {

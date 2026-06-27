@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.awt.print.Printable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class ReportPanel extends JPanel {
         // Button Panel (Center)
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
 
-        refreshButton = new JButton("🔄 Refresh Reports");
+        refreshButton = new JButton("Refresh Reports");
         refreshButton.setFont(new Font("Arial", Font.PLAIN, 12));
         refreshButton.addActionListener(e -> {
             loadAllData();
@@ -78,7 +79,7 @@ public class ReportPanel extends JPanel {
         });
         buttonPanel.add(refreshButton);
 
-        printButton = new JButton("🖨️ Print Report");
+        printButton = new JButton("Print Report");
         printButton.setFont(new Font("Arial", Font.PLAIN, 12));
         printButton.addActionListener(e -> printReport());
         buttonPanel.add(printButton);
@@ -90,7 +91,7 @@ public class ReportPanel extends JPanel {
 
         // --- Filter Panel ---
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        filterPanel.setBorder(BorderFactory.createTitledBorder("🔍 Filter Reports"));
+        filterPanel.setBorder(BorderFactory.createTitledBorder("Filter Reports"));
 
         // Doctor filter
         filterPanel.add(new JLabel("Doctor:"));
@@ -114,11 +115,11 @@ public class ReportPanel extends JPanel {
         filterPanel.add(searchPatientField);
 
         // Filter buttons
-        filterButton = new JButton("🔍 Apply Filter");
+        filterButton = new JButton("Apply Filter");
         filterButton.addActionListener(e -> applyFilters());
         filterPanel.add(filterButton);
 
-        clearFilterButton = new JButton("✖ Clear");
+        clearFilterButton = new JButton("Clear");
         clearFilterButton.addActionListener(e -> clearFilters());
         filterPanel.add(clearFilterButton);
 
@@ -128,19 +129,19 @@ public class ReportPanel extends JPanel {
         JPanel summaryPanel = new JPanel(new GridLayout(1, 4, 10, 10));
         summaryPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
-        totalPatientsLabel = new JLabel("👤 Patients: 0", SwingConstants.CENTER);
+        totalPatientsLabel = new JLabel("Patients: 0", SwingConstants.CENTER);
         totalPatientsLabel.setFont(new Font("Arial", Font.BOLD, 14));
         totalPatientsLabel.setForeground(new Color(0, 102, 204));
 
-        totalAppointmentsLabel = new JLabel("📋 Total: 0", SwingConstants.CENTER);
+        totalAppointmentsLabel = new JLabel("Total: 0", SwingConstants.CENTER);
         totalAppointmentsLabel.setFont(new Font("Arial", Font.BOLD, 14));
         totalAppointmentsLabel.setForeground(new Color(0, 102, 204));
 
-        totalScheduledLabel = new JLabel("⏳ Scheduled: 0", SwingConstants.CENTER);
+        totalScheduledLabel = new JLabel("Scheduled: 0", SwingConstants.CENTER);
         totalScheduledLabel.setFont(new Font("Arial", Font.BOLD, 14));
         totalScheduledLabel.setForeground(new Color(255, 140, 0));
 
-        totalCompletedLabel = new JLabel("✅ Completed: 0", SwingConstants.CENTER);
+        totalCompletedLabel = new JLabel("Completed: 0", SwingConstants.CENTER);
         totalCompletedLabel.setFont(new Font("Arial", Font.BOLD, 14));
         totalCompletedLabel.setForeground(new Color(0, 153, 0));
 
@@ -365,10 +366,10 @@ public class ReportPanel extends JPanel {
      * Loads and displays statistics.
      */
     public void loadStats() {
-        totalPatientsLabel.setText("👤 Patients: " + reportController.getTotalPatients());
-        totalAppointmentsLabel.setText("📋 Total: " + reportController.getTotalAppointments());
-        totalScheduledLabel.setText("⏳ Scheduled: " + reportController.getTotalAppointmentsByStatus("SCHEDULED"));
-        totalCompletedLabel.setText("✅ Completed: " + reportController.getTotalAppointmentsByStatus("COMPLETED"));
+        totalPatientsLabel.setText("Patients: " + reportController.getTotalPatients());
+        totalAppointmentsLabel.setText("Total: " + reportController.getTotalAppointments());
+        totalScheduledLabel.setText("Scheduled: " + reportController.getTotalAppointmentsByStatus("SCHEDULED"));
+        totalCompletedLabel.setText("Completed: " + reportController.getTotalAppointmentsByStatus("COMPLETED"));
     }
 
     /**
@@ -390,7 +391,7 @@ public class ReportPanel extends JPanel {
     private void updateTimestamp() {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
-        lastUpdatedLabel.setText("📅 Last updated: " + now.format(formatter));
+        lastUpdatedLabel.setText("Last updated: " + now.format(formatter));
     }
 
     /**
@@ -410,7 +411,7 @@ public class ReportPanel extends JPanel {
             contentPanel.setVisible(true);
         } else {
             contentPanel.setVisible(false);
-            showAccessDeniedDialog("⛔ Access Denied\n\nOnly Admin and Receptionist can view reports.");
+            showAccessDeniedDialog("Access Denied\n\nOnly Admin and Receptionist can view reports.");
         }
     }
 
@@ -435,7 +436,7 @@ public class ReportPanel extends JPanel {
         if (currentUser == null || !(currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.RECEPTIONIST)) {
             JOptionPane.showMessageDialog(
                     this,
-                    "⛔ You do not have permission to print reports.",
+                    "You do not have permission to print reports.",
                     "Access Denied",
                     JOptionPane.ERROR_MESSAGE
             );
@@ -471,7 +472,7 @@ public class ReportPanel extends JPanel {
                 job.print();
                 JOptionPane.showMessageDialog(
                         this,
-                        "✅ Report printed successfully!",
+                        "Report printed successfully!",
                         "Print Success",
                         JOptionPane.INFORMATION_MESSAGE
                 );
@@ -479,7 +480,7 @@ public class ReportPanel extends JPanel {
         } catch (PrinterException e) {
             JOptionPane.showMessageDialog(
                     this,
-                    "❌ Error printing report: " + e.getMessage(),
+                    "Error printing report: " + e.getMessage(),
                     "Print Error",
                     JOptionPane.ERROR_MESSAGE
             );
