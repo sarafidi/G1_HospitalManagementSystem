@@ -40,9 +40,9 @@ import model.MedicalNote;
 public class MedicalNotesPanel extends JPanel {
     private AppointmentController apptController;
     private MedicalNoteController notesController;
-    private String currentDocId = "DOC-0002"; // Simulasi doktor login
+    private String currentDocId = "DOC-0002";
 
-    // Komponen GUI
+    // Components
     private JComboBox<String> comboApptId;
     private JTextField txtDocId, txtPatientId, txtDateTime;
     private JRadioButton radNoMc, radReqMc, radNoFollow, radReqFollow;
@@ -50,11 +50,11 @@ public class MedicalNotesPanel extends JPanel {
     private JTextArea txtS, txtO, txtA, txtP;
     private JButton btnUpdate, btnSubmit;
     
-    // Table Sebelah Kanan (Side Peek)
+    // Table for displaying appointments
     private JTable table;
     private DefaultTableModel tableModel;
 
-    // Teks Petunjuk (Placeholders)
+    // TextArea placeholders
     private final String hintO = "  Measurable data (vital signs, physical exam findings, and lab results)";
     private final String hintA = "  Clinical impression, provisional diagnosis or differential diagnoses";
     private final String hintP = "  Prescribed medications, therapies, follow-up appointments, or lifestyle changes";
@@ -68,9 +68,7 @@ public class MedicalNotesPanel extends JPanel {
         mainGbc.fill = GridBagConstraints.BOTH;
         mainGbc.weighty = 1.0;
 
-        // =========================================================================
-        // 1. LAYOUT SEBELAH KIRI: BORANG DOKTOR (ADD MEDICAL RECORD)
-        // =========================================================================
+        // Add medical notes form on the left and appointment table on the right
         JPanel leftPanel = new JPanel(new GridBagLayout());
         leftPanel.setBorder(BorderFactory.createTitledBorder("Add Medical Record"));
         GridBagConstraints gbc = new GridBagConstraints();
@@ -78,7 +76,7 @@ public class MedicalNotesPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        // ROW 0: Appointment ID & Doctor ID
+        // Appointment ID & Doctor ID
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 1;
         leftPanel.add(new JLabel("Appointment ID:"), gbc);
         gbc.gridx = 1;
@@ -91,7 +89,7 @@ public class MedicalNotesPanel extends JPanel {
         txtDocId = new JTextField(10);
         leftPanel.add(txtDocId, gbc);
 
-        // ROW 1: Patient ID & Date Time
+        // Patient ID & Date Time
         gbc.gridx = 0; gbc.gridy = 1;
         leftPanel.add(new JLabel("Patient ID:"), gbc);
         gbc.gridx = 1;
@@ -104,7 +102,7 @@ public class MedicalNotesPanel extends JPanel {
         txtDateTime = new JTextField(12);
         leftPanel.add(txtDateTime, gbc);
 
-        // ROW 2: Medical Leave & Follow-up
+        // Medical Leave & Follow-up
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1;
         leftPanel.add(new JLabel("Medical Leave:"), gbc);
         gbc.gridx = 1;
@@ -118,14 +116,14 @@ public class MedicalNotesPanel extends JPanel {
         gbc.gridx = 2;
         leftPanel.add(new JLabel("Follow-up:"), gbc);
         gbc.gridx = 3;
-        radNoFollow = new JRadioButton("No Follow-up", true);
-        radReqFollow = new JRadioButton("Follow-up Needed");
+        radNoFollow = new JRadioButton("No", true);
+        radReqFollow = new JRadioButton("Needed");
         ButtonGroup bgFollow = new ButtonGroup(); bgFollow.add(radNoFollow); bgFollow.add(radReqFollow);
         JPanel pnlFollow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         pnlFollow.add(radNoFollow); pnlFollow.add(radReqFollow);
         leftPanel.add(pnlFollow, gbc);
 
-        // ROW 3: Categories
+        // Categories
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.NORTHWEST; 
         leftPanel.add(new JLabel("Categories:"), gbc);
@@ -139,12 +137,12 @@ public class MedicalNotesPanel extends JPanel {
         pnlChk.add(chkReferral); pnlChk.add(chkUrgent); pnlChk.add(chkLabTest);
         leftPanel.add(pnlChk, gbc);
 
-        // RESET ANCHOR & FILL
+        // Reset anchor & fill for text areas
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 1;
 
-        // ROW 4: Subjective
+        // Subjective
         gbc.gridx = 0; gbc.gridy = 4;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         leftPanel.add(new JLabel("Subjective:"), gbc);
@@ -152,7 +150,7 @@ public class MedicalNotesPanel extends JPanel {
         txtS = new JTextArea(3, 30); txtS.setLineWrap(true);
         leftPanel.add(new JScrollPane(txtS), gbc);
 
-        // ROW 5: Objective
+        // Objective
         gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         leftPanel.add(new JLabel("Objective:"), gbc);
@@ -161,7 +159,7 @@ public class MedicalNotesPanel extends JPanel {
         setupPlaceholder(txtO, hintO);
         leftPanel.add(new JScrollPane(txtO), gbc);
 
-        // ROW 6: Assessment
+        // Assessment
         gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         leftPanel.add(new JLabel("Assessment:"), gbc);
@@ -170,7 +168,7 @@ public class MedicalNotesPanel extends JPanel {
         setupPlaceholder(txtA, hintA);
         leftPanel.add(new JScrollPane(txtA), gbc);
 
-        // ROW 7: Plan
+        // Plan
         gbc.gridx = 0; gbc.gridy = 7; gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         leftPanel.add(new JLabel("Plan:"), gbc);
@@ -179,11 +177,11 @@ public class MedicalNotesPanel extends JPanel {
         setupPlaceholder(txtP, hintP);
         leftPanel.add(new JScrollPane(txtP), gbc);
 
-        // RESET ANCHOR & FILL UNTUK BUTTONS
+        // Reset anchor & fill for buttons
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.NONE;
 
-        // ROW 8: Buttons
+        // Buttons
         gbc.gridx = 1; gbc.gridy = 8; gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.LINE_END;
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
@@ -200,9 +198,7 @@ public class MedicalNotesPanel extends JPanel {
         mainGbc.gridx = 0; mainGbc.gridy = 0; mainGbc.weightx = 0.35;
         add(leftPanel, mainGbc);
 
-        // =========================================================================
-        // 2. LAYOUT SEBELAH KANAN: TABLE CENTERED & BERWARNA
-        // =========================================================================
+        // Right panel: Appointment table
         String[] cols = {"Appointment ID", "Patient ID", "Date & Time", "Status"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -245,9 +241,7 @@ public class MedicalNotesPanel extends JPanel {
         mainGbc.gridx = 1; mainGbc.weightx = 0.65;
         add(new JScrollPane(table), mainGbc);
 
-        // =========================================================================
-        // 3. LISTENERS & VALIDATION LOGIC
-        // =========================================================================
+        // Listeners and Validation
         lockFixedFields();
         loadDoctorAppointments();
 
@@ -268,11 +262,11 @@ public class MedicalNotesPanel extends JPanel {
             }
         });
 
-        // SUBMIT ACTION
+        // Submit Action
         btnSubmit.addActionListener(e -> {
             String apptId = (String) comboApptId.getSelectedItem();
             if (apptId == null || apptId.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Sila pilih Appointment ID!", "Error", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please select an Appointment ID.", "Error", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -282,22 +276,22 @@ public class MedicalNotesPanel extends JPanel {
                     .filter(a -> a.getAppointmentId().equals(apptId)).findFirst().orElse(null);
             
             if (appt != null && appt.getStatus() == AppStatus.COMPLETED) {
-                JOptionPane.showMessageDialog(this, "Janji temu ini sudah COMPLETED. Sila guna butang UPDATE.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "This appointment is already COMPLETED. Please use the UPDATE button.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             notesController.submitMedicalNote(createNoteFromForm(apptId));
             if (appt != null) appt.setStatus(AppStatus.COMPLETED);
 
-            JOptionPane.showMessageDialog(this, "Medical Note berjaya dihantar!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Medical Note submitted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshPanel();
         });
 
-        // UPDATE ACTION
+        // Update Action
         btnUpdate.addActionListener(e -> {
             String apptId = (String) comboApptId.getSelectedItem();
             if (apptId == null || apptId.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Sila pilih Appointment ID!", "Error", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please select an Appointment ID.", "Error", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -307,12 +301,12 @@ public class MedicalNotesPanel extends JPanel {
                     .filter(a -> a.getAppointmentId().equals(apptId)).findFirst().orElse(null);
 
             if (appt == null || appt.getStatus() != AppStatus.COMPLETED) {
-                JOptionPane.showMessageDialog(this, "Hanya janji temu COMPLETED sahaja boleh di-update!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Only COMPLETED appointments can be updated!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             notesController.updateMedicalNote(createNoteFromForm(apptId));
-            JOptionPane.showMessageDialog(this, "Nota perubatan berjaya di-update!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Medical note updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshPanel();
         });
     }
@@ -323,15 +317,15 @@ public class MedicalNotesPanel extends JPanel {
         String pText = txtP.getText().trim();
 
         if (oText.isEmpty() || oText.equals(hintO.trim())) {
-            JOptionPane.showMessageDialog(this, "Ruangan 'Objective (O)' WAJIB diisi!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Field 'Objective' is required!", "Validation Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         if (aText.isEmpty() || aText.equals(hintA.trim())) {
-            JOptionPane.showMessageDialog(this, "Ruangan 'Assessment (A)' WAJIB diisi!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Field 'Assessment' is required!", "Validation Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         if (pText.isEmpty() || pText.equals(hintP.trim())) {
-            JOptionPane.showMessageDialog(this, "Ruangan 'Plan (P)' WAJIB diisi!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Field 'Plan' is required!", "Validation Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -352,7 +346,6 @@ public class MedicalNotesPanel extends JPanel {
             txtDateTime.setText(appt.getAppointmentDateTime());
             txtS.setText(appt.getNotes());
 
-            // Pastikan font kekal HITAM pekat selepas auto-isi data
             txtDocId.setForeground(Color.BLACK);
             txtPatientId.setForeground(Color.BLACK);
             txtDateTime.setForeground(Color.BLACK);
@@ -368,11 +361,10 @@ public class MedicalNotesPanel extends JPanel {
                 chkUrgent.setSelected(oldNote.isUrgentCase());
                 chkLabTest.setSelected(oldNote.isLabTestOrdered());
             } else {
-                // Kalau kes CANCELLED tapi tak ada nota perubatan lama, kita kosongkan placeholder supaya tak keliru
                 if (appt.getStatus() == AppStatus.CANCELLED) {
-                    txtO.setText("- Tiada Rekod -"); txtO.setForeground(Color.BLACK); txtO.setFont(new Font("sansserif", Font.PLAIN, 12));
-                    txtA.setText("- Tiada Rekod -"); txtA.setForeground(Color.BLACK); txtA.setFont(new Font("sansserif", Font.PLAIN, 12));
-                    txtP.setText("- Tiada Rekod -"); txtP.setForeground(Color.BLACK); txtP.setFont(new Font("sansserif", Font.PLAIN, 12));
+                    txtO.setText("  - No Record -"); txtO.setForeground(Color.BLACK); txtO.setFont(new Font("sansserif", Font.PLAIN, 12));
+                    txtA.setText("  - No Record -"); txtA.setForeground(Color.BLACK); txtA.setFont(new Font("sansserif", Font.PLAIN, 12));
+                    txtP.setText("  - No Record -"); txtP.setForeground(Color.BLACK); txtP.setFont(new Font("sansserif", Font.PLAIN, 12));
                 } else {
                     setupPlaceholder(txtO, hintO);
                     setupPlaceholder(txtA, hintA);
@@ -381,8 +373,8 @@ public class MedicalNotesPanel extends JPanel {
             }
             
             if (appt.getStatus() == AppStatus.CANCELLED) {
-                setFormEnabled(false); // Kunci borang
-                JOptionPane.showMessageDialog(this, "Janji temu ini telah CANCELLED. Anda hanya dibenarkan melihat sahaja.", "View Only", JOptionPane.WARNING_MESSAGE);
+                setFormEnabled(false);
+                JOptionPane.showMessageDialog(this, "This appointment has been CANCELLED. You are only allowed to view.", "View Only", JOptionPane.WARNING_MESSAGE);
             } else {
                 setFormEnabled(true);
                 lockFixedFields(); 
@@ -390,19 +382,15 @@ public class MedicalNotesPanel extends JPanel {
         }
     }
 
-    // FUNGSI BARU: Kita guna setEditable & setForeground supaya kekal HITAM PEKAT!
     private void setFormEnabled(boolean enabled) {
-        // Guna setEditable, bukan setEnabled supaya font tak dipaksa jadi kelabu oleh Java
         txtO.setEditable(enabled); 
         txtA.setEditable(enabled); 
         txtP.setEditable(enabled);
         
-        // Kekalkan tulisan warna hitam pekat walaupun dia locked
         txtO.setForeground(Color.BLACK);
         txtA.setForeground(Color.BLACK);
         txtP.setForeground(Color.BLACK);
 
-        // Komponen klik masih guna setEnabled sebab tak ada isu font kelabu teruk
         radNoMc.setEnabled(enabled); radReqMc.setEnabled(enabled);
         radNoFollow.setEnabled(enabled); radReqFollow.setEnabled(enabled);
         chkReferral.setEnabled(enabled); chkUrgent.setEnabled(enabled); chkLabTest.setEnabled(enabled);
@@ -412,12 +400,11 @@ public class MedicalNotesPanel extends JPanel {
         txtO.setBackground(bg); txtA.setBackground(bg); txtP.setBackground(bg);
     }
 
-    // Pastikan fungsi ini 'public' dalam MedicalNotesPanel.java supaya MainFrame boleh panggil
     public void refreshPanel() {
     setFormEnabled(true);
-    clearForm();             // Kosongkan form & reset placeholder OAP
-    loadDoctorAppointments(); // Tarik semula data paling latest dari controller!
-    lockFixedFields();       // Kunci balik Doc ID, Patient ID, Masa
+    clearForm();             
+    loadDoctorAppointments(); 
+    lockFixedFields();
 }
 
     private void lockFixedFields() {
@@ -425,7 +412,7 @@ public class MedicalNotesPanel extends JPanel {
         for (JTextField f : fields) {
             f.setEditable(false); 
             f.setBackground(Color.LIGHT_GRAY); 
-            f.setForeground(Color.BLACK); // NO 1: Kekal tulisan warna hitam
+            f.setForeground(Color.BLACK);
         }
         txtS.setEditable(false); txtS.setBackground(Color.LIGHT_GRAY); txtS.setForeground(Color.BLACK);
     }
@@ -466,11 +453,10 @@ public class MedicalNotesPanel extends JPanel {
         setupPlaceholder(txtO, hintO); setupPlaceholder(txtA, hintA); setupPlaceholder(txtP, hintP);
     }
 
-    // NO 2: FUNGSI PLACEHOLDER TULISAN SENGET (ITALIC)
     private void setupPlaceholder(JTextArea textArea, String hint) {
         textArea.setText(hint); 
         textArea.setForeground(Color.GRAY);
-        textArea.setFont(new Font("sansserif", Font.ITALIC, 12)); // Set senget awal
+        textArea.setFont(new Font("sansserif", Font.ITALIC, 12)); 
         
         for (java.awt.event.FocusListener fl : textArea.getFocusListeners()) { textArea.removeFocusListener(fl); }
         textArea.addFocusListener(new FocusListener() {
@@ -479,7 +465,7 @@ public class MedicalNotesPanel extends JPanel {
                 if (textArea.getText().equals(hint)) {
                     textArea.setText(""); 
                     textArea.setForeground(Color.BLACK);
-                    textArea.setFont(new Font("sansserif", Font.PLAIN, 12)); // Tegak balik bila ditaip
+                    textArea.setFont(new Font("sansserif", Font.PLAIN, 12)); 
                 }
             }
             @Override
@@ -487,7 +473,7 @@ public class MedicalNotesPanel extends JPanel {
                 if (textArea.getText().trim().isEmpty()) {
                     textArea.setText(hint); 
                     textArea.setForeground(Color.GRAY);
-                    textArea.setFont(new Font("sansserif", Font.ITALIC, 12)); // Senget balik kalau kosong
+                    textArea.setFont(new Font("sansserif", Font.ITALIC, 12)); 
                 }
             }
         });
