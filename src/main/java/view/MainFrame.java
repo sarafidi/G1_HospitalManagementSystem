@@ -115,6 +115,13 @@ public class MainFrame extends JFrame {
             if (medicalNotePanel != null) {
                 ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
             }
+
+            if (appointmentPanel != null) {
+                ((AppointmentPanel) appointmentPanel).refreshPanel();
+            }
+
+            javax.swing.JOptionPane.showMessageDialog(this, "All system data has been refreshed!", "Refresh Success", 
+            javax.swing.JOptionPane.INFORMATION_MESSAGE);
         });
 
         // reason: nav sidebar should not be visible on the login screen

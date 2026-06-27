@@ -2,6 +2,7 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -20,6 +21,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import controller.AppointmentController;
@@ -192,7 +195,7 @@ public class AppointmentPanel extends JPanel {
                         return;
                     }
 
-                    String reason = JOptionPane.showInputDialog(this, "Enter cancellation reason for appointment. " + apptId + ":", "Cancel Reason", JOptionPane.QUESTION_MESSAGE);
+                    String reason = JOptionPane.showInputDialog(this, "Enter cancellation reason for appointment " + apptId + ":", "Cancel Reason", JOptionPane.QUESTION_MESSAGE);
                     if (reason == null) return; 
                     if (reason.trim().isEmpty()) {
                         JOptionPane.showMessageDialog(this, "Cancellation reason is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
@@ -215,6 +218,7 @@ public class AppointmentPanel extends JPanel {
                             );
 
                             list.set(i, cancelledAppt);
+                            controller.updateStatus(apptId, AppStatus.CANCELLED);
                             break;
                         }
                     }
@@ -236,15 +240,54 @@ public class AppointmentPanel extends JPanel {
                 }
             };
 
-            table = new JTable(tableModel);
-            table.setAutoCreateRowSorter(true); 
+        table = new JTable(tableModel);
+        table.setAutoCreateRowSorter(true); 
 
-            // Set alignment
-            javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
-            centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-            for (int i = 0; i < 5; i++) {
-                table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        // 1. RENDERER KHAS UNTUK STATUS (Column Index 4 - Center + Warna)
+        DefaultTableCellRenderer statusRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                setHorizontalAlignment(SwingConstants.CENTER); // Status wajib center
+                
+                if (value != null) { 
+                    String status = value.toString();
+                    if (status.equalsIgnoreCase("SCHEDULED")) {
+                        c.setBackground(new Color(255, 239, 150)); c.setForeground(Color.BLACK);
+                    } else if (status.equalsIgnoreCase("COMPLETED")) {
+                        c.setBackground(new Color(175, 238, 175)); c.setForeground(Color.BLACK);
+                    } else if (status.equalsIgnoreCase("CANCELLED")) {
+                        c.setBackground(new Color(255, 182, 193)); c.setForeground(Color.BLACK);
+                    }
+                }
+                return c;
             }
+        };
+
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                setHorizontalAlignment(SwingConstants.LEFT); 
+                
+                if (isSelected) {
+                    c.setBackground(table.getSelectionBackground()); c.setForeground(table.getSelectionForeground());
+                } else {
+                    c.setBackground(table.getBackground()); c.setForeground(table.getForeground());
+                }
+                return c;
+            }
+        };
+
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            if (i == 4) {
+                table.getColumnModel().getColumn(i).setCellRenderer(statusRenderer); 
+            } else {
+                table.getColumnModel().getColumn(i).setCellRenderer(leftRenderer); 
+            }
+        }
 
             // Set column widths
             table.getColumnModel().getColumn(0).setPreferredWidth(90); 
@@ -460,6 +503,68 @@ public class AppointmentPanel extends JPanel {
         txtNotes.setText("");
         txtDate.setText(java.time.LocalDate.now().toString());
         comboTime.setSelectedIndex(0);
+    }
+
+    // Refresh Panel Data
+    public void refreshPanel() {
+    clearForm();                 
+    loadTableData();
+    loadAppointmentsData();    
+    setFormEnabled(true); 
+}
+
+    private void clearForm() {
+        txtPatientId.setSelectedItem("");
+        txtDoctorId.setSelectedItem("");
+        txtNotes.setText("");
+        txtDate.setText(java.time.LocalDate.now().toString());
+        comboTime.setSelectedIndex(0);
+
+    }
+
+    private void setFormEnabled(boolean enabled) {
+        txtPatientId.setEditable(enabled);
+        txtDoctorId.setEditable(enabled);
+        txtDate.setEditable(enabled);
+        txtNotes.setEditable(enabled);
+        
+        txtPatientId.setEnabled(enabled);
+        txtDoctorId.setEnabled(enabled);
+        
+        btnBook.setEnabled(enabled);
+        btnCancel.setEnabled(enabled);
+        btnUpdate.setEnabled(enabled);
+
+        Color bg = enabled ? Color.WHITE : Color.WHITE;
+        txtPatientId.setBackground(bg);
+        txtDoctorId.setBackground(bg);
+        txtDate.setBackground(bg);
+        txtNotes.setBackground(bg);
+        
+        txtPatientId.setForeground(Color.BLACK);
+        txtDoctorId.setForeground(Color.BLACK);
+        txtDate.setForeground(Color.BLACK);
+        txtNotes.setForeground(Color.BLACK);
+    }
+
+    private void loadAppointmentsData() {
+        tableModel.setRowCount(0);
+
+        java.util.List<Appointment> list = controller.getAllAppointments();
+
+        list.sort((a1, a2) -> a1.getAppointmentId().compareTo(a2.getAppointmentId()));
+
+        for (Appointment appt : list) {
+            Object[] row = {
+                appt.getAppointmentId(),
+                appt.getPatientId(),
+                appt.getDoctorId(),
+                appt.getAppointmentDateTime(),
+                appt.getStatus().toString(),
+                appt.getNotes()
+            };
+            tableModel.addRow(row);
+        }
     }
 
     // ID Suggestions

@@ -281,11 +281,15 @@ public class MedicalNotesPanel extends JPanel {
             }
 
             notesController.submitMedicalNote(createNoteFromForm(apptId));
-            if (appt != null) appt.setStatus(AppStatus.COMPLETED);
+            
+            if (appt != null) {
+                appt.setStatus(AppStatus.COMPLETED);
+                apptController.updateStatus(apptId, AppStatus.COMPLETED); 
+            }
 
             JOptionPane.showMessageDialog(this, "Medical Note submitted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshPanel();
-        });
+});
 
         // Update Action
         btnUpdate.addActionListener(e -> {
@@ -401,11 +405,11 @@ public class MedicalNotesPanel extends JPanel {
     }
 
     public void refreshPanel() {
-    setFormEnabled(true);
-    clearForm();             
-    loadDoctorAppointments(); 
-    lockFixedFields();
-}
+        setFormEnabled(true);
+        clearForm();             
+        loadDoctorAppointments(); 
+        lockFixedFields();
+    }
 
     private void lockFixedFields() {
         JTextField[] fields = {txtDocId, txtPatientId, txtDateTime};
