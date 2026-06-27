@@ -1,15 +1,15 @@
 package controller;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
 import model.Appointment;
 import model.Doctor;
 import model.MedicalNote;
 import model.Patient;
 import util.DataStore;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 public class ReportController {
 
