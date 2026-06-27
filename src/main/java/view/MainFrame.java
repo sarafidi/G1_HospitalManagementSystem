@@ -84,6 +84,7 @@ public class MainFrame extends JFrame {
         JButton appointmentsButton = new JButton("Appointments");
         JButton patientsButton = new JButton("Patients");
         JButton doctorsButton = new JButton("Doctors");
+        JButton medicalNotesButton = new JButton("Medical Notes");
         JButton reportsButton = new JButton("Reports");
         JButton logoutButton = new JButton("Logout");
         userMgmtBtn = new JButton("User Management");
@@ -92,6 +93,7 @@ public class MainFrame extends JFrame {
         appointmentsButton.addActionListener(e -> showPanel("APPOINTMENTS"));
         patientsButton.addActionListener(e -> showPanel("PATIENTS"));
         doctorsButton.addActionListener(e -> showPanel("DOCTORS"));
+        medicalNotesButton.addActionListener(e -> showPanel("MEDICAL_NOTES"));
         reportsButton.addActionListener(e -> showPanel("REPORTS"));
         userMgmtBtn.addActionListener(e -> showPanel("USER_MANAGEMENT"));
         logoutButton.addActionListener(e -> handleLogout());
@@ -101,6 +103,7 @@ public class MainFrame extends JFrame {
         navPanel.add(appointmentsButton);
         navPanel.add(patientsButton);
         navPanel.add(doctorsButton);
+        navPanel.add(medicalNotesButton);  
         navPanel.add(reportsButton);
         navPanel.add(userMgmtBtn);
         navPanel.add(logoutButton);
@@ -129,9 +132,9 @@ public class MainFrame extends JFrame {
         cardPanel.add(userPanel, "USER_MANAGEMENT");
         cardPanel.add(appointmentPanel, "APPOINTMENTS");
         cardPanel.add(doctorPanel, "DOCTORS");
+        cardPanel.add(medicalNotePanel, "MEDICAL_NOTES");
         cardPanel.add(patientPanel, "PATIENTS");
         cardPanel.add(reportPanel, "REPORTS");
-        cardPanel.add(medicalNotePanel, "MEDICAL_NOTES");
 
         add(cardPanel, BorderLayout.CENTER);
         cardLayout.show(cardPanel, "LOGIN");
