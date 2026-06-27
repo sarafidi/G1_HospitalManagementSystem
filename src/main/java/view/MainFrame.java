@@ -1,84 +1,84 @@
-        package view;
+package view;
 
-        import java.awt.BorderLayout;
-        import java.awt.CardLayout;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
-        import java.awt.Dimension;
+import java.awt.Dimension;
 
-        import javax.swing.BorderFactory; // Ditambah untuk susun butang kat bawah sekali
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-        import javax.swing.JButton;
-        import javax.swing.JFrame;
-        import javax.swing.JLabel;
-        import javax.swing.JPanel;
-        import javax.swing.SwingConstants;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
-        import controller.AppointmentController;
-        import controller.AuthController;
-        import controller.MedicalNoteController;
-        import controller.UserController;
-        import model.Role;
-        import model.User;
-        import util.SessionManager;
+import controller.AppointmentController;
+import controller.AuthController;
+import controller.MedicalNoteController;
+import controller.UserController;
+import model.Role;
+import model.User;
+import util.SessionManager;
 
-        public class MainFrame extends JFrame {
+public class MainFrame extends JFrame {
 
-        // CardLayout — switches between panels by name
-        // reason: cleaner than removing/adding components dynamically
-        private CardLayout cardLayout;
+    // CardLayout — switches between panels by name
+    // reason: cleaner than removing/adding components dynamically
+    private CardLayout cardLayout;
 
-        // cardPanel — container that holds all panels
-        // reason: CardLayout needs a single parent container to manage
-        private JPanel cardPanel;
+    // cardPanel — container that holds all panels
+    // reason: CardLayout needs a single parent container to manage
+    private JPanel cardPanel;
 
-        // navPanel — sidebar shown after login
-        // reason: persistent navigation visible on all post-login screens
-        private JPanel navPanel;
+    // navPanel — sidebar shown after login
+    // reason: persistent navigation visible on all post-login screens
+    private JPanel navPanel;
 
-        // controllers — created once, injected into panels that need them
-        // reason: one controller instance shared across the frame avoids duplicate DataStore calls
-        private AuthController authController;
-        private UserController userController;
-        private AppointmentController appointmentController;
-        private MedicalNoteController medicalNoteController;
+    // controllers — created once, injected into panels that need them
+    // reason: one controller instance shared across the frame avoids duplicate DataStore calls
+    private AuthController authController;
+    private UserController userController;
+    private AppointmentController appointmentController;
+    private MedicalNoteController medicalNoteController;
 
-        // panels owned by Member 1
-        private LoginPanel loginPanel;
-        private UserPanel userPanel;
+    // panels owned by Member 1
+    private LoginPanel loginPanel;
+    private UserPanel userPanel;
 
-        // TODO: After all models completed
-        // placeholder panels for teammates' modules
-        // reason: allows MainFrame to compile before teammates finish their panels
-        private JPanel appointmentPanel;
-        private JPanel patientPanel;
-        private JPanel doctorPanel;
-        private JPanel reportPanel;
-        private JPanel medicalNotePanel;
+    // TODO: After all models completed
+    // placeholder panels for teammates' modules
+    // reason: allows MainFrame to compile before teammates finish their panels
+    private JPanel appointmentPanel;
+    private JPanel patientPanel;
+    private JPanel doctorPanel;
+    private JPanel reportPanel;
+    private JPanel medicalNotePanel;
 
-        // reason: so onLoginSuccess() can show/hide them by role
-        private JButton userMgmtBtn;
-        private JButton refreshButton;
+    // reason: so onLoginSuccess() can show/hide them by role
+    private JButton userMgmtBtn;
+    private JButton refreshButton;
 
-        public MainFrame() {
+    public MainFrame() {
         // reason: controllers created here, injected into panels — panels never create controllers themselves
         this.authController = new AuthController();
         this.userController = new UserController();
         this.appointmentController = new AppointmentController();
         this.medicalNoteController = new MedicalNoteController();
-        initComponents();
-        setupFrame();
-        }
+            initComponents();
+            setupFrame();
+    }
 
-        private void setupFrame() {
+    private void setupFrame() {
         setTitle("Hospital Management System");
         setSize(1100, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
-        }
+    }
 
-        private void initComponents() {
+    private void initComponents() {
         setLayout(new BorderLayout());
 
         // --- NAV PANEL (sidebar) ---
@@ -105,32 +105,16 @@ import javax.swing.BoxLayout;
         appointmentsButton.addActionListener(e -> showPanel("APPOINTMENTS"));
         patientsButton.addActionListener(e -> showPanel("PATIENTS"));
         doctorsButton.addActionListener(e -> showPanel("DOCTORS"));
-        
-        // REFRESH MEDICAL NOTES BILA TEKAN SIDEBAR
-        medicalNotesButton.addActionListener(e -> {
-            if (medicalNotePanel != null) {
-                ((MedicalNotesPanel) medicalNotePanel).refreshPanel(); 
-            }
-            showPanel("MEDICAL_NOTES");
-        });
-        
-        refreshButton.addActionListener(e -> {
-            if (medicalNotePanel != null) {
-                ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
-            }
-        });
-
+        medicalNotesButton.addActionListener(e -> showPanel("MEDICAL_NOTES"));
         reportsButton.addActionListener(e -> showPanel("REPORTS"));
         userMgmtBtn.addActionListener(e -> showPanel("USER_MANAGEMENT"));
         logoutButton.addActionListener(e -> handleLogout());
 
-        // ACTION UNTUK BUTTON REFRESH SIDEBAR
+        // Refresh button action listener to refresh data in the currently visible panel
         refreshButton.addActionListener(e -> {
-            // 1. Refresh data temujanji doktor jika sedang buka skrin Medical Notes
             if (medicalNotePanel != null) {
                 ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
             }
-            // 2. Sini kau boleh tambah fungsi refresh untuk panel kawan-kawan kau yang lain nanti (cth: appointmentPanel.refresh())
         });
 
         // reason: nav sidebar should not be visible on the login screen
@@ -143,7 +127,6 @@ import javax.swing.BoxLayout;
         navPanel.add(userMgmtBtn);
         navPanel.add(logoutButton);
 
-        // Helah BoxLayout: Letak 'Glue' supaya butang seterusnya (Refresh) dipaksa duduk paling bawah sekali
         navPanel.add(Box.createVerticalGlue());
         navPanel.add(refreshButton);
         navPanel.add(Box.createVerticalStrut(10));
@@ -179,9 +162,9 @@ import javax.swing.BoxLayout;
 
         add(cardPanel, BorderLayout.CENTER);
         cardLayout.show(cardPanel, "LOGIN");
-        }
+    }
 
-        private void onLoginSuccess() {
+    private void onLoginSuccess() {
         // called by LoginPanel's callback when login succeeds
         User user = SessionManager.getInstance().getCurrentUser();
         if (user.isFirstLogin()) {
@@ -197,9 +180,9 @@ import javax.swing.BoxLayout;
         if (user.getRole() == Role.DOCTOR) {
         showPanel("APPOINTMENTS");
         }
-        }
+    }
 
-        private void handleLogout() {
+    private void handleLogout() {
         authController.logout();
         navPanel.setVisible(false);
         if (medicalNotePanel != null) {
