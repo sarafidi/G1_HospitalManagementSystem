@@ -1,57 +1,50 @@
 package controller;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.AppStatus;
 import model.MedicalNote;
-import util.DataStore;
 
 public class MedicalNoteController {
+    private List<MedicalNote> notesList;
 
-    private final DataStore dataStore = DataStore.getInstance();
-    private final AppointmentController apptController = new AppointmentController();
-
-    // Add Medical Note
-    public void addMedicalNote(MedicalNote note) {
-        for (MedicalNote existingNote : dataStore.getMedicalNotes()) {
-            if (existingNote.getAppointmentId().equalsIgnoreCase(note.getAppointmentId())) {
-                System.out.println("Error: Notes for this appointment already exist. Please update the existing note instead of adding a new one.");
-                return;
-            }
-        }
-
-        dataStore.getMedicalNotes().add(note);
-        dataStore.saveMedicalNotes();
-        System.out.println("Medical Note " + note.getNoteId() + " successfully saved!");
-
-        apptController.updateStatus(note.getAppointmentId(), AppStatus.COMPLETED);
+    public MedicalNoteController() {
+        // Sepatutnya pancing dari DataStore JSON korang, buat masa ni kita simpan dalam Memory List dulu
+        this.notesList = new ArrayList<>();
     }
 
-    // View Medical Notes by Patient
-    public List<MedicalNote> getNotesByPatient(String patientId) {
-        List<MedicalNote> filteredList = new ArrayList<>();
-        for (MedicalNote note : dataStore.getMedicalNotes()) {
-            if (note.getPatientId().equalsIgnoreCase(patientId)) {
-                filteredList.add(note);
-            }
-        }
-        return filteredList;
+    // Fungsi untuk hantar/simpan Medical Note baharu
+    public void submitMedicalNote(MedicalNote note) {
+        // Cek kalau dah wujud nota untuk Appt ID ni (elak duplicate), kita remove yang lama dan ganti baru
+        notesList.removeIf(n -> n.getAppointmentId().equals(note.getAppointmentId()));
+        notesList.add(note);
+        
+        // TODO: Sarafina/Putra punya DataStore.saveMedicalNotes(notesList) panggil kat sini kalau ada
     }
 
-    // Update Medical Note
-    public void updateMedicalNote(String noteId, String newDiagnosis, String newPrescription) {
-        for (MedicalNote note : dataStore.getMedicalNotes()) {
-            if (note.getNoteId().equalsIgnoreCase(noteId)) {
-                note.setDiagnosis(newDiagnosis);
-                note.setPrescription(newPrescription);
-                note.setUpdatedAt(LocalDateTime.now());
-                
-                dataStore.saveMedicalNotes();
-                System.out.println("Medical Note " + noteId + " successfully updated!");
-                return;
+    // Fungsi untuk update Medical Note sedia ada
+    public void updateMedicalNote(MedicalNote note) {
+        for (int i = 0; i < notesList.size(); i++) {
+            if (notesList.get(i).getAppointmentId().equals(note.getAppointmentId())) {
+                notesList.set(i, note);
+                break;
             }
         }
+        // TODO: Panggil DataStore JSON untuk simpan perubahan
+    }
+
+    // Ambil semua senarai nota perubatan
+    public List<MedicalNote> getAllMedicalNotes() {
+        return notesList;
+    }
+
+    // Cari nota spesifik berdasarkan Appointment ID
+    public MedicalNote getNoteByAppointmentId(String apptId) {
+        for (MedicalNote note : notesList) {
+            if (note.getAppointmentId().equals(apptId)) {
+                return note;
+            }
+        }
+        return null;
     }
 }
