@@ -35,4 +35,4 @@ bin/
 /data/
 
 ### target folder ###
-target
+/target
