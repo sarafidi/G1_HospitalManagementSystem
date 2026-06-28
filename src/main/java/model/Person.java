@@ -26,6 +26,8 @@ public abstract class Person {
 
     // setters
     public void setName(String name) { this.name = name; }
+    public void setAge(int age) { this.age = age; }
+    public void setGender(Gender gender) { this.gender = gender; }
     public void setPhone(String phone) { this.phone = phone; }
     public void setEmail(String email) { this.email = email; }
 

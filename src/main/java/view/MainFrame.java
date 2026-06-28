@@ -2,9 +2,11 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -12,7 +14,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import controller.AppointmentController;
 import controller.AuthController;
+import controller.MedicalNoteController;
 import controller.UserController;
 import model.Role;
 import model.User;
@@ -36,6 +40,8 @@ public class MainFrame extends JFrame {
     // reason: one controller instance shared across the frame avoids duplicate DataStore calls
     private AuthController authController;
     private UserController userController;
+    private AppointmentController appointmentController;
+    private MedicalNoteController medicalNoteController;
 
     // panels owned by Member 1
     private LoginPanel loginPanel;
@@ -52,13 +58,16 @@ public class MainFrame extends JFrame {
 
     // reason: so onLoginSuccess() can show/hide them by role
     private JButton userMgmtBtn;
+    private JButton refreshButton;
 
     public MainFrame() {
         // reason: controllers created here, injected into panels — panels never create controllers themselves
         this.authController = new AuthController();
         this.userController = new UserController();
-        initComponents();
-        setupFrame();
+        this.appointmentController = new AppointmentController();
+        this.medicalNoteController = new MedicalNoteController();
+            initComponents();
+            setupFrame();
     }
 
     private void setupFrame() {
@@ -84,26 +93,51 @@ public class MainFrame extends JFrame {
         JButton appointmentsButton = new JButton("Appointments");
         JButton patientsButton = new JButton("Patients");
         JButton doctorsButton = new JButton("Doctors");
+        JButton medicalNotesButton = new JButton("Medical Notes");
         JButton reportsButton = new JButton("Reports");
         JButton logoutButton = new JButton("Logout");
         userMgmtBtn = new JButton("User Management");
+
+        refreshButton = new JButton("Refresh Data");
+        refreshButton.setBackground(new Color(220, 220, 220));
 
         dashboardButton.addActionListener(e -> showPanel("LOGIN"));
         appointmentsButton.addActionListener(e -> showPanel("APPOINTMENTS"));
         patientsButton.addActionListener(e -> showPanel("PATIENTS"));
         doctorsButton.addActionListener(e -> showPanel("DOCTORS"));
+        medicalNotesButton.addActionListener(e -> showPanel("MEDICAL_NOTES"));
         reportsButton.addActionListener(e -> showPanel("REPORTS"));
         userMgmtBtn.addActionListener(e -> showPanel("USER_MANAGEMENT"));
         logoutButton.addActionListener(e -> handleLogout());
+
+        // Refresh button action listener to refresh data in the currently visible panel
+        refreshButton.addActionListener(e -> {
+            if (medicalNotePanel != null) {
+                ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
+            }
+
+            if (appointmentPanel != null) {
+                ((AppointmentPanel) appointmentPanel).refreshPanel();
+            }
+
+            javax.swing.JOptionPane.showMessageDialog(this, "All system data has been refreshed!", "Refresh Success", 
+            javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        });
 
         // reason: nav sidebar should not be visible on the login screen
         navPanel.add(dashboardButton);
         navPanel.add(appointmentsButton);
         navPanel.add(patientsButton);
         navPanel.add(doctorsButton);
+        navPanel.add(medicalNotesButton);
         navPanel.add(reportsButton);
         navPanel.add(userMgmtBtn);
         navPanel.add(logoutButton);
+
+        navPanel.add(Box.createVerticalGlue());
+        navPanel.add(refreshButton);
+        navPanel.add(Box.createVerticalStrut(10));
+
         add(navPanel, BorderLayout.WEST);
         navPanel.setVisible(false);
 
@@ -113,8 +147,7 @@ public class MainFrame extends JFrame {
         loginPanel = new LoginPanel(authController, () -> onLoginSuccess());
         userPanel = new UserPanel(userController);
 
-        appointmentPanel = new JPanel(new BorderLayout());
-        appointmentPanel.add(new JLabel("Appointments - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
+        appointmentPanel = new view.AppointmentPanel();
 
         patientPanel = new JPanel(new BorderLayout());
         patientPanel.add(new JLabel("Patients - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
@@ -124,16 +157,15 @@ public class MainFrame extends JFrame {
 
         reportPanel = new ReportPanel();
 
-        medicalNotePanel = new JPanel(new BorderLayout());
-        medicalNotePanel.add(new JLabel("Medical Notes - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
+        medicalNotePanel = new MedicalNotesPanel(appointmentController, medicalNoteController);
 
         cardPanel.add(loginPanel, "LOGIN");
         cardPanel.add(userPanel, "USER_MANAGEMENT");
         cardPanel.add(appointmentPanel, "APPOINTMENTS");
         cardPanel.add(doctorPanel, "DOCTORS");
+        cardPanel.add(medicalNotePanel, "MEDICAL_NOTES");
         cardPanel.add(patientPanel, "PATIENTS");
         cardPanel.add(reportPanel, "REPORTS");
-        cardPanel.add(medicalNotePanel, "MEDICAL_NOTES");
 
         add(cardPanel, BorderLayout.CENTER);
         cardLayout.show(cardPanel, "LOGIN");
@@ -143,23 +175,27 @@ public class MainFrame extends JFrame {
         // called by LoginPanel's callback when login succeeds
         User user = SessionManager.getInstance().getCurrentUser();
         if (user.isFirstLogin()) {
-            new ChangePasswordDialog(this, userController, user.getUserId(), true).setVisible(true);
+        new ChangePasswordDialog(this, userController, user.getUserId(), true).setVisible(true);
         }
 
         navPanel.setVisible(true);
         userMgmtBtn.setVisible(user.getRole() == Role.ADMIN);
 
         if (user.getRole() == Role.ADMIN || user.getRole() == Role.RECEPTIONIST) {
-            showPanel("PATIENTS");
+        showPanel("PATIENTS");
         }
         if (user.getRole() == Role.DOCTOR) {
-            showPanel("APPOINTMENTS");
+        showPanel("APPOINTMENTS");
         }
     }
 
     private void handleLogout() {
         authController.logout();
         navPanel.setVisible(false);
+        if (medicalNotePanel != null) {
+            cardPanel.remove(medicalNotePanel);
+            medicalNotePanel = null;
+        }
         showPanel("LOGIN");
     }
 
