@@ -55,7 +55,7 @@ public class IDGenerator {
     public static String generateNoteId() {
         ArrayList<String> ids = new ArrayList<>();
         for (MedicalNote p : DataStore.getInstance().getMedicalNotes()) {
-            ids.add(p.getMedicalNoteId());
+            ids.add(p.getNoteId());
         }
         // %04d -> integer, min 4 digits, pad with zeros on left
         return String.format("NOTE-%03d", extractMaxNumeric(ids) + 1);

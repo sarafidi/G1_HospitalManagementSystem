@@ -1,15 +1,15 @@
 package controller;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
 import model.Appointment;
 import model.Doctor;
 import model.MedicalNote;
 import model.Patient;
 import util.DataStore;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 public class ReportController {
 
@@ -61,7 +61,7 @@ public class ReportController {
         for (Appointment appt : dataStore.getAppointments()) {
             String doctorName = getDoctorName(appt.getDoctorId());
             String patientName = getPatientName(appt.getPatientId());
-            String dateTime = formatDateTime(appt.getAppointmentDatetime());
+            String dateTime = formatDateTime(appt.getAppointmentDateTime());
 
             schedule.add(new String[]{
                 doctorName,
@@ -101,7 +101,10 @@ public class ReportController {
             LocalDateTime now = LocalDateTime.now();
             filtered = filtered.stream()
                     .filter(a -> {
-                        LocalDateTime apptTime = a.getAppointmentDatetime();
+                        LocalDateTime apptTime = parseDateTime(a.getAppointmentDateTime());
+                        if (apptTime == null) {
+                            return false;
+                        }
                         switch (period) {
                             case "Today":
                                 return apptTime.toLocalDate().equals(now.toLocalDate());
@@ -132,9 +135,9 @@ public class ReportController {
         // Convert to String array format with NAMES (not IDs)
         ArrayList<String[]> result = new ArrayList<>();
         for (Appointment appt : filtered) {
-            String doctorName = getDoctorName(appt.getDoctorId());   // ← Resolve doctor ID to NAME
-            String patientName = getPatientName(appt.getPatientId()); // ← Resolve patient ID to NAME
-            String dateTime = formatDateTime(appt.getAppointmentDatetime());
+            String doctorName = getDoctorName(appt.getDoctorId());   // Resolve doctor ID to NAME
+            String patientName = getPatientName(appt.getPatientId()); // Resolve patient ID to NAME
+            String dateTime = formatDateTime(appt.getAppointmentDateTime());
 
             result.add(new String[]{
                 doctorName,
@@ -212,11 +215,26 @@ public class ReportController {
     /**
      * Formats LocalDateTime to "dd MMM yyyy HH:mm" format.
      */
-    private String formatDateTime(LocalDateTime dateTime) {
-        if (dateTime == null) {
+    private String formatDateTime(String dateTimeText) {
+        if (dateTimeText == null || dateTimeText.isEmpty()) {
             return "N/A";
+        }
+        LocalDateTime dateTime = parseDateTime(dateTimeText);
+        if (dateTime == null) {
+            return dateTimeText;
         }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
         return dateTime.format(formatter);
+    }
+
+    private LocalDateTime parseDateTime(String dateTimeText) {
+        if (dateTimeText == null || dateTimeText.isEmpty()) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(dateTimeText);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
