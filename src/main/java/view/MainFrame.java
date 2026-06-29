@@ -55,6 +55,7 @@ public class MainFrame extends JFrame {
         // reason: controllers created here, injected into panels — panels never create controllers themselves
         this.authController = new AuthController();
         this.userController = new UserController();
+        this.doctorController = new DoctorController();
         this.appointmentController = new AppointmentController();
         this.medicalNoteController = new MedicalNoteController();
             initComponents();

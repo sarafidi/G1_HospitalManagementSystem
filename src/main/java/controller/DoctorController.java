@@ -126,24 +126,30 @@ public class DoctorController {
         if (!Validator.isNonEmpty(name)) {
             throw new IllegalArgumentException("Name cannot be empty.");
         }
-        if (!Validator.isNonEmpty(specialization)) {
-            throw new IllegalArgumentException("Specialization cannot be empty.");
-        }
-        if (!Validator.isNonEmpty(licenseNo)) {
-            throw new IllegalArgumentException("License number cannot be empty.");
-        }
 
-        // format checks
-        if (!Validator.isValidEmail(email)) {
-            throw new IllegalArgumentException("Error: Email is invalid.");
-        }
-        if (!Validator.isValidPhone(phone)) {
-            throw new IllegalArgumentException("Phone must start with 0 and be 10-11 digits.");
-        }
-        
-        // apply consistent professional age restrictions (Doctors must be 18 to 125)
-        if (age < 18 || age > 125) {
-            throw new IllegalArgumentException("Age not eligible, must be between 18 and 125.");
+        // If it's a placeholder/default doctor record created during User creation, bypass strict validations
+        boolean isPlaceholder = (age == 0 && "-".equals(specialization) && "-".equals(licenseNo));
+
+        if (!isPlaceholder) {
+            if (!Validator.isNonEmpty(specialization)) {
+                throw new IllegalArgumentException("Specialization cannot be empty.");
+            }
+            if (!Validator.isNonEmpty(licenseNo)) {
+                throw new IllegalArgumentException("License number cannot be empty.");
+            }
+
+            // format checks
+            if (!Validator.isValidEmail(email)) {
+                throw new IllegalArgumentException("Error: Email is invalid.");
+            }
+            if (!Validator.isValidPhone(phone)) {
+                throw new IllegalArgumentException("Phone must start with 0 and be 10-11 digits.");
+            }
+            
+            // apply consistent professional age restrictions (Doctors must be 18 to 125)
+            if (age < 18 || age > 125) {
+                throw new IllegalArgumentException("Age not eligible, must be between 18 and 125.");
+            }
         }
 
         // uniqueness checks
@@ -155,11 +161,13 @@ public class DoctorController {
             if (d.getName().equalsIgnoreCase(name)) {
                 throw new IllegalArgumentException("Doctor name already exists.");
             }
-            if (d.getEmail().equalsIgnoreCase(email)) {
-                throw new IllegalArgumentException("Email already exists.");
-            }
-            if (d.getLicenseNo().equalsIgnoreCase(licenseNo)) {
-                throw new IllegalArgumentException("License number already exists.");
+            if (!isPlaceholder) {
+                if (d.getEmail().equalsIgnoreCase(email) && !email.isEmpty() && !"-".equals(email)) {
+                    throw new IllegalArgumentException("Email already exists.");
+                }
+                if (d.getLicenseNo().equalsIgnoreCase(licenseNo) && !"-".equals(licenseNo)) {
+                    throw new IllegalArgumentException("License number already exists.");
+                }
             }
         }
     }

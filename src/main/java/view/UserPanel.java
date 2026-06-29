@@ -184,6 +184,7 @@ public class UserPanel extends JPanel implements MouseListener {
     }
 
     private void handleAddUser() {
+        messageLabel.setText("");
         String username = usernameField.getText();
         String name = nameField.getText();
         String email = emailField.getText();
