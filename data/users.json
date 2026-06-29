@@ -114,5 +114,18 @@
     "isFirstLogin": true,
     "doctorId": "—",
     "createdAt": "2026-06-29T02:00:09.302378400"
+  },
+  {
+    "userId": "USR-0020",
+    "username": "rec2",
+    "name": "rec2",
+    "email": "rec2@mail.com",
+    "phone": "01234567897",
+    "passwordHash": "191904440c3a567c054e56ee1831204c422553732b255ad562f7034e54543554",
+    "role": "RECEPTIONIST",
+    "isActive": true,
+    "isFirstLogin": false,
+    "doctorId": "",
+    "createdAt": "2026-06-29T12:22:03.429242900"
   }
 ]
