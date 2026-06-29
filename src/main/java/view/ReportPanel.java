@@ -66,9 +66,7 @@ public class ReportPanel extends JPanel {
         this.reportController = new ReportController();
         this.allDoctors = new ArrayList<>();
         initComponents();
-        checkRoleAccess();
-        loadAllData();
-        updateTimestamp();
+        // checkRoleAccess() and loadAllData() moved to setVisible() to avoid popups on startup
     }
 
     private void initComponents() {
@@ -630,5 +628,15 @@ public class ReportPanel extends JPanel {
         panel.add(footerLabel, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    @Override
+    public void setVisible(boolean aFlag) {
+        super.setVisible(aFlag);
+        if (aFlag) {
+            checkRoleAccess();
+            loadAllData();
+            updateTimestamp();
+        }
     }
 }

@@ -1,9 +1,6 @@
 package view;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -13,11 +10,10 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 
-import controller.AppointmentController;
-import controller.AuthController;
-import controller.MedicalNoteController;
-import controller.UserController;
+import controller.*;
 import model.Role;
 import model.User;
 import util.SessionManager;
@@ -40,6 +36,7 @@ public class MainFrame extends JFrame {
     // reason: one controller instance shared across the frame avoids duplicate DataStore calls
     private AuthController authController;
     private UserController userController;
+    private DoctorController doctorController;
     private AppointmentController appointmentController;
     private MedicalNoteController medicalNoteController;
 
@@ -60,10 +57,13 @@ public class MainFrame extends JFrame {
     private JButton userMgmtBtn;
     private JButton refreshButton;
 
+    private Border borderDefault = new EmptyBorder(10, 15, 10, 15);
+
     public MainFrame() {
         // reason: controllers created here, injected into panels — panels never create controllers themselves
         this.authController = new AuthController();
         this.userController = new UserController();
+//        this.doctorController = new DoctorController();
         this.appointmentController = new AppointmentController();
         this.medicalNoteController = new MedicalNoteController();
             initComponents();
@@ -82,10 +82,10 @@ public class MainFrame extends JFrame {
         setLayout(new BorderLayout());
 
         // --- NAV PANEL (sidebar) ---
-        // reason: BoxLayout Y_AXIS stacks buttons vertically in sidebar
+        // reason: Flowlayout.LEFT stacks buttons vertically to the left in sidebar adds margin between buttons
         // reason: EtchedBorder gives subtle visual separation between nav and content
         navPanel = new JPanel();
-        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
+        navPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 15));
         navPanel.setPreferredSize(new Dimension(180, 0));
         navPanel.setBorder(BorderFactory.createEtchedBorder());
 
@@ -100,6 +100,15 @@ public class MainFrame extends JFrame {
 
         refreshButton = new JButton("Refresh Data");
         refreshButton.setBackground(new Color(220, 220, 220));
+
+//        dashboardButton.setBorder(borderDefault);
+//        appointmentsButton.setBorder(borderDefault);
+//        patientsButton.setBorder(borderDefault);
+//        doctorsButton.setBorder(borderDefault);
+//        medicalNotesButton.setBorder(borderDefault);
+//        reportsButton.setBorder(borderDefault);
+//        userMgmtBtn.setBorder(borderDefault);
+//        logoutButton.setBorder(borderDefault);
 
         dashboardButton.addActionListener(e -> showPanel("LOGIN"));
         appointmentsButton.addActionListener(e -> showPanel("APPOINTMENTS"));
@@ -145,15 +154,15 @@ public class MainFrame extends JFrame {
         cardLayout = new CardLayout();
         cardPanel = new JPanel(cardLayout);
         loginPanel = new LoginPanel(authController, () -> onLoginSuccess());
-        userPanel = new UserPanel(userController);
+        userPanel = new UserPanel(userController, doctorController, () -> handleLogout());
 
         appointmentPanel = new view.AppointmentPanel();
 
         patientPanel = new JPanel(new BorderLayout());
-        patientPanel.add(new JLabel("Patients - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
+        patientPanel = new PatientPanel();
 
         doctorPanel = new JPanel(new BorderLayout());
-        doctorPanel.add(new JLabel("Doctors - Coming Soon", SwingConstants.CENTER), BorderLayout.CENTER);
+        doctorPanel = new DoctorPanel();
 
         reportPanel = new ReportPanel();
 
@@ -175,17 +184,23 @@ public class MainFrame extends JFrame {
         // called by LoginPanel's callback when login succeeds
         User user = SessionManager.getInstance().getCurrentUser();
         if (user.isFirstLogin()) {
-        new ChangePasswordDialog(this, userController, user.getUserId(), true).setVisible(true);
+            ChangePasswordDialog dialog = new ChangePasswordDialog(this, userController, user.getUserId(), true);
+            dialog.setVisible(true);
+            if (!dialog.isSuccess()) {
+                handleLogout();
+                return;
+            }
         }
 
         navPanel.setVisible(true);
         userMgmtBtn.setVisible(user.getRole() == Role.ADMIN);
 
-        if (user.getRole() == Role.ADMIN || user.getRole() == Role.RECEPTIONIST) {
-        showPanel("PATIENTS");
+        if (user.getRole() == Role.ADMIN) {
+            showPanel("USER_MANAGEMENT");
         }
+
         if (user.getRole() == Role.DOCTOR) {
-        showPanel("APPOINTMENTS");
+            showPanel("APPOINTMENTS");
         }
     }
 

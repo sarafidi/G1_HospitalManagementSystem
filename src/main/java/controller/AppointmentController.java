@@ -6,7 +6,10 @@ import java.util.List;
 import exception.DuplicateSlotException;
 import model.AppStatus;
 import model.Appointment;
+import model.Role;
+import model.User;
 import util.DataStore;
+import util.SessionManager;
 
 public class AppointmentController {
     
@@ -49,6 +52,13 @@ public class AppointmentController {
             }
         }
         return filteredList;
+    }
+
+    // check if user logged is doctor
+    public String isDoctor() {
+        User user = SessionManager.getInstance().getCurrentUser();
+        if (user == null) return null;
+        return user.getRole() == Role.DOCTOR ? user.getDoctorId() : null;
     }
 
     // Update Status

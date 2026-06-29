@@ -407,7 +407,7 @@ public class MedicalNotesPanel extends JPanel {
     public void refreshPanel() {
         setFormEnabled(true);
         clearForm();             
-        loadDoctorAppointments(); 
+        loadDoctorAppointments();
         lockFixedFields();
     }
 

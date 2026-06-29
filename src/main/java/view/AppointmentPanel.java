@@ -9,7 +9,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -27,12 +29,18 @@ import javax.swing.table.DefaultTableModel;
 
 import controller.AppointmentController;
 import exception.DuplicateSlotException;
-import model.AppStatus;
-import model.Appointment;
+import model.*;
+import util.DataStore;
+import util.SessionManager;
+import util.UIConfig;
+
+import static util.UIConfig.*;
 
 public class AppointmentPanel extends JPanel {
 
     private final AppointmentController controller = new AppointmentController();
+    private DataStore dataStore = DataStore.getInstance();
+    private String isDoctorLoggedIn;
 
     // UI Components - Form Fields
     private JComboBox<String> txtPatientId;
@@ -54,7 +62,7 @@ public class AppointmentPanel extends JPanel {
 
         // Title
         JLabel lblTitle = new JLabel("Appointment Booking Management", JLabel.CENTER);
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 18));
+        lblTitle.setFont(new Font(DEF_FONT_FAMILY, Font.BOLD, 18));
         add(lblTitle, BorderLayout.NORTH);
 
         // Input Form Panel
@@ -71,15 +79,23 @@ public class AppointmentPanel extends JPanel {
             gbc.gridx = 1;
             txtPatientId = new JComboBox<>();
             txtPatientId.setEditable(true);
-            txtPatientId.addItem("");
+            // Populate with all active doctors
+            for (Patient p : dataStore.getPatients()) {
+                txtPatientId.addItem(p.getPatientId());
+            }
             formPanel.add(txtPatientId, gbc);
 
             gbc.gridx = 2;
             formPanel.add(new JLabel("Doctor ID:"), gbc);
             gbc.gridx = 3;
             txtDoctorId = new JComboBox<>();
-            txtDoctorId.setEditable(true);
-            txtDoctorId.addItem("");
+            if (isDoctorLoggedIn != null) {
+                txtDoctorId.addItem(isDoctorLoggedIn);
+                txtDoctorId.setEnabled(false);
+            } else {
+                txtDoctorId.setEnabled(true);
+                txtDoctorId.addItem("");
+            }
             formPanel.add(txtDoctorId, gbc);
 
             //  Date & Time Slot
@@ -322,7 +338,7 @@ public class AppointmentPanel extends JPanel {
                                            
                         // Non-editable fields - Date
                         txtDate.setEditable(false);
-                        txtDate.setBackground(Color.LIGHT_GRAY);
+//                        txtDate.setBackground(Color.LIGHT_GRAY);
                         txtDate.setForeground(Color.BLACK);
 
                         for (java.awt.event.MouseListener ml : txtPatientId.getMouseListeners()) { txtPatientId.removeMouseListener(ml); }
@@ -341,7 +357,7 @@ public class AppointmentPanel extends JPanel {
                             comp.setEnabled(false); 
                             comp.addMouseListener(mouseShield); 
                         }
-                        txtPatientId.getEditor().getEditorComponent().setBackground(Color.LIGHT_GRAY);
+//                        txtPatientId.getEditor().getEditorComponent().setBackground(Color.LIGHT_GRAY);
                         txtPatientId.getEditor().getEditorComponent().setForeground(Color.BLACK);
 
                         // Non-editable fields - Doctor ID
@@ -351,7 +367,7 @@ public class AppointmentPanel extends JPanel {
                             comp.setEnabled(false);
                             comp.addMouseListener(mouseShield);
                         }
-                        txtDoctorId.getEditor().getEditorComponent().setBackground(Color.LIGHT_GRAY);
+//                        txtDoctorId.getEditor().getEditorComponent().setBackground(Color.LIGHT_GRAY);
                         txtDoctorId.getEditor().getEditorComponent().setForeground(Color.BLACK);
 
                         // Non-editable fields - Time Slot
@@ -383,10 +399,16 @@ public class AppointmentPanel extends JPanel {
     // Handle Booking Appointment
     private void handleBookAppointment() {
         String pId = (txtPatientId.getSelectedItem() != null) ? txtPatientId.getSelectedItem().toString().trim().toUpperCase() : "";
-        String dId = (txtDoctorId.getSelectedItem() != null) ? txtDoctorId.getSelectedItem().toString().trim().toUpperCase() : "";
+        String dId = "";
         String dateStr = txtDate.getText().trim();
         String timeStr = comboTime.getSelectedItem().toString();
         String notes = txtNotes.getText().trim();
+
+        if (isDoctorLoggedIn != null) {
+            dId = txtDoctorId.getSelectedItem().toString();
+        } else {
+            dId = (txtDoctorId.getSelectedItem() != null) ? txtDoctorId.getSelectedItem().toString().trim().toUpperCase() : "";
+        }
 
         // Validation
         if (pId.isEmpty() || dId.isEmpty() || dateStr.isEmpty()) {
@@ -399,10 +421,10 @@ public class AppointmentPanel extends JPanel {
             return;
         }
 
-        if (!dId.matches("^DOC-\\d{4}$")) {
-            JOptionPane.showMessageDialog(this, "Format for Doctor ID is incorrect! Must follow the format DOC-XXXX.", "Format Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+//        if (!dId.matches("^DOC-\\d{4}$")) {
+//            JOptionPane.showMessageDialog(this, "Format for Doctor ID is incorrect! Must follow the format DOC-XXXX.", "Format Error", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        }
 
         try {
             LocalDate date = LocalDate.parse(dateStr);
@@ -482,12 +504,14 @@ public class AppointmentPanel extends JPanel {
         txtPatientId.getEditor().getEditorComponent().setBackground(Color.WHITE);
 
         // Doctor ID
-        txtDoctorId.setEditable(true);
         for (java.awt.Component comp : txtDoctorId.getComponents()) {
-            comp.setEnabled(true);
             for (java.awt.event.MouseListener ml : comp.getMouseListeners()) { comp.removeMouseListener(ml); }
         }
         txtDoctorId.getEditor().getEditorComponent().setBackground(Color.WHITE);
+        configureDoctorSelection();
+        if (isDoctorLoggedIn == null) {
+            txtDoctorId.setSelectedItem("");
+        }
 
         // Time Slot
         for (java.awt.Component comp : comboTime.getComponents()) {
@@ -507,24 +531,53 @@ public class AppointmentPanel extends JPanel {
 
     // Refresh Panel Data
     public void refreshPanel() {
-    clearForm();                 
-    loadTableData();
-    loadAppointmentsData();    
-    setFormEnabled(true); 
-}
+        isDoctorLoggedIn = controller.isDoctor();
+        clearForm();                 
+        loadTableData();
+        loadAppointmentsData();    
+        setFormEnabled(true);
+        configureDoctorSelection();
+    }
+
+    private void configureDoctorSelection() {
+        if (isDoctorLoggedIn != null) {
+            txtDoctorId.removeAllItems();
+            txtDoctorId.addItem(isDoctorLoggedIn);
+            txtDoctorId.setSelectedItem(isDoctorLoggedIn);
+            txtDoctorId.setEnabled(false);
+        } else {
+            txtDoctorId.setEnabled(true);
+//            txtDoctorId.setEditable(true);
+            
+            // Populate with all active doctors
+            txtDoctorId.removeAllItems();
+//            txtDoctorId.addItem("");
+            for (User u : dataStore.getUsers()) {
+                if (u.getRole() == Role.DOCTOR && u.isActive()) {
+//                    String dId = u.getDoctorId();
+//                    if (dId != null && !dId.trim().isEmpty() && !dId.equals("—")) {
+                        txtDoctorId.addItem(u.getDoctorId());
+//                    }
+                }
+            }
+        }
+    }
 
     private void clearForm() {
         txtPatientId.setSelectedItem("");
-        txtDoctorId.setSelectedItem("");
+        if (isDoctorLoggedIn != null) {
+            txtDoctorId.setSelectedItem(isDoctorLoggedIn);
+        } else {
+            txtDoctorId.setSelectedItem("");
+        }
         txtNotes.setText("");
         txtDate.setText(java.time.LocalDate.now().toString());
         comboTime.setSelectedIndex(0);
-
     }
 
     private void setFormEnabled(boolean enabled) {
-        txtPatientId.setEditable(enabled);
-        txtDoctorId.setEditable(enabled);
+//        txtPatientId.setEditable(enabled);
+//        txtDoctorId.setEditable(enabled);
         txtDate.setEditable(enabled);
         txtNotes.setEditable(enabled);
         
@@ -549,8 +602,14 @@ public class AppointmentPanel extends JPanel {
 
     private void loadAppointmentsData() {
         tableModel.setRowCount(0);
+        List<Appointment> list = controller.getAllAppointments();
 
-        java.util.List<Appointment> list = controller.getAllAppointments();
+        if (isDoctorLoggedIn != null) {
+            list = list.stream()
+                    .filter(a -> a.getDoctorId().equalsIgnoreCase(isDoctorLoggedIn))
+                    .collect(Collectors.toList());
+
+        }
 
         list.sort((a1, a2) -> a1.getAppointmentId().compareTo(a2.getAppointmentId()));
 
@@ -577,6 +636,14 @@ public class AppointmentPanel extends JPanel {
         String[] sampleDoctors = {"DOC-0001", "DOC-0005", "DOC-0024", "DOC-0888"};
         for (String doc : sampleDoctors) {
             txtDoctorId.addItem(doc);
+        }
+    }
+
+    @Override
+    public void setVisible(boolean aFlag) {
+        super.setVisible(aFlag);
+        if (aFlag) {
+            refreshPanel();
         }
     }
 }

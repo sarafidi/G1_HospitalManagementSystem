@@ -4,6 +4,7 @@ import controller.PatientController;
 import model.Gender;
 import model.Patient;
 import model.Role;
+import model.User;
 import util.SessionManager;
 
 import javax.swing.*;
@@ -401,8 +402,12 @@ public class PatientPanel extends JPanel {
     }
 
     // doctor role can only view
-    private void checkRole() {
-        Role role = SessionManager.getInstance().getCurrentUser().getRole();
+    public void checkRole() {
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            return;
+        }
+        Role role = currentUser.getRole();
 
         if (role == Role.DOCTOR) {
             btnAdd.setVisible(false);
@@ -415,6 +420,26 @@ public class PatientPanel extends JPanel {
             tfBloodType.setEditable(false);
             taHistory.setEditable(false);
             cbGender.setEnabled(false);
+        } else {
+            btnAdd.setVisible(true);
+            btnUpdate.setVisible(true);
+            btnDelete.setVisible(true);
+            tfName.setEditable(true);
+            tfAge.setEditable(true);
+            tfPhone.setEditable(true);
+            tfEmail.setEditable(true);
+            tfBloodType.setEditable(true);
+            taHistory.setEditable(true);
+            cbGender.setEnabled(true);
+        }
+    }
+
+    @Override
+    public void setVisible(boolean aFlag) {
+        super.setVisible(aFlag);
+        if (aFlag) {
+            checkRole();
+            loadTable();
         }
     }
 }

@@ -21,17 +21,7 @@ public class DoctorController {
                             String department) {
 
         // check required fields
-        if (!Validator.isNonEmpty(name)) {
-            throw new IllegalArgumentException("Name cannot be empty.");
-        }
-
-        if (!Validator.isNonEmpty(specialization)) {
-            throw new IllegalArgumentException("Specialization cannot be empty.");
-        }
-
-        if (!Validator.isNonEmpty(licenseNo)) {
-            throw new IllegalArgumentException("License number cannot be empty.");
-        }
+        checkFieldNotEmpty(name, specialization, licenseNo);
 
         if (!Validator.isValidPhone(phone)) {
             throw new IllegalArgumentException("Phone must start with 0 and be 10-11 digits.");
@@ -39,14 +29,6 @@ public class DoctorController {
 
         if (!Validator.isValidAge(age)) {
             throw new IllegalArgumentException("Age must be between 0 and 125.");
-        }
-
-        // check if license number already exists
-        ArrayList<Doctor> doctors = dataStore.getDoctors();
-        for (int i = 0; i < doctors.size(); i++) {
-            if (doctors.get(i).getLicenseNo().equals(licenseNo)) {
-                throw new IllegalArgumentException("License number already exists.");
-            }
         }
 
         // generate a new doctor id like DOC-0001
@@ -71,8 +53,7 @@ public class DoctorController {
     public Doctor getDoctorById(String doctorId) {
         ArrayList<Doctor> doctors = dataStore.getDoctors();
 
-        for (int i = 0; i < doctors.size(); i++) {
-            Doctor d = doctors.get(i);
+        for (Doctor d : doctors) {
             if (d.getDoctorId().equals(doctorId)) {
                 return d;
             }
@@ -86,8 +67,7 @@ public class DoctorController {
         ArrayList<Doctor> results = new ArrayList<>();
         ArrayList<Doctor> doctors = dataStore.getDoctors();
 
-        for (int i = 0; i < doctors.size(); i++) {
-            Doctor d = doctors.get(i);
+        for (Doctor d : doctors) {
             if (d.getName().toLowerCase().contains(keyword.toLowerCase())) {
                 results.add(d);
             }
@@ -102,23 +82,27 @@ public class DoctorController {
                              String specialization, String licenseNo,
                              String department) {
 
-        if (!Validator.isNonEmpty(name)) {
-            throw new IllegalArgumentException("Name cannot be empty.");
-        }
-
-        if (!Validator.isNonEmpty(specialization)) {
-            throw new IllegalArgumentException("Specialization cannot be empty.");
-        }
-
-        if (!Validator.isNonEmpty(licenseNo)) {
-            throw new IllegalArgumentException("License number cannot be empty.");
-        }
+        checkFieldNotEmpty(name, specialization, licenseNo);
 
         // find the doctor and update their fields
         Doctor d = getDoctorById(doctorId);
 
         if (d == null) {
             throw new IllegalArgumentException("Doctor not found.");
+        }
+        
+        if (age < 18) {
+            throw new IllegalArgumentException("Age not eligible, must be more than 17");
+        }
+
+        if (licenseNo.trim().isEmpty()) {
+            // check if license number already exists
+            ArrayList<Doctor> doctors = dataStore.getDoctors();
+            for (Doctor doctor : doctors) {
+                if (doctor.getLicenseNo().equals(licenseNo)) {
+                    throw new IllegalArgumentException("License number already exists.");
+                }
+            }
         }
 
         d.setName(name);
@@ -162,5 +146,20 @@ public class DoctorController {
         }
 
         dataStore.saveDoctors();
+    }
+
+    // helper method
+    private void checkFieldNotEmpty(String name, String specialization, String licenseNo) {
+        if (!Validator.isNonEmpty(name)) {
+            throw new IllegalArgumentException("Name cannot be empty.");
+        }
+
+        if (!Validator.isNonEmpty(specialization)) {
+            throw new IllegalArgumentException("Specialization cannot be empty.");
+        }
+
+        if (!Validator.isNonEmpty(licenseNo)) {
+            throw new IllegalArgumentException("License number cannot be empty.");
+        }
     }
 }

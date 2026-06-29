@@ -15,6 +15,7 @@ public class ChangePasswordDialog extends JDialog {
 
     // reason: controls whether cancel is allowed and which title to show
     private boolean isForced;
+    private boolean success = false;
 
     // reason: JPasswordField masks input — more secure than JTextField for passwords
     private JPasswordField newPasswordField;
@@ -51,6 +52,8 @@ public class ChangePasswordDialog extends JDialog {
 
         newPasswordField = new JPasswordField();
         confirmPasswordField = new JPasswordField();
+        newPasswordField.setPreferredSize(new Dimension(200, newPasswordField.getPreferredSize().height));
+        confirmPasswordField.setPreferredSize(new Dimension(200, confirmPasswordField.getPreferredSize().height));
 
         formPanel.add(new JLabel("New Password"));
         formPanel.add(newPasswordField);
@@ -71,6 +74,8 @@ public class ChangePasswordDialog extends JDialog {
 
         JButton confirmButton = new JButton("Confirm");
         confirmButton.addActionListener(e -> handleConfirm());
+        newPasswordField.addActionListener(e -> handleConfirm());
+        confirmPasswordField.addActionListener(e -> handleConfirm());
 
         buttonPanel.add(cancelButton);
         buttonPanel.add(confirmButton);
@@ -98,13 +103,14 @@ public class ChangePasswordDialog extends JDialog {
         if (error != null) {
             errorLabel.setText(error);
             return;
-        } else { dispose(); }
+        } else {
+            success = true;
+            dispose();
+        }
 
     }
 
-    private void handleCancel() {
-        // reason: forced password change cannot be skipped
-        if (isForced) return;
-        else { dispose(); }
-    }
+    private void handleCancel() { dispose(); }
+
+    public boolean isSuccess() { return success; }
 }

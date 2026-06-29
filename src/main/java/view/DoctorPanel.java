@@ -4,6 +4,7 @@ import controller.DoctorController;
 import model.Doctor;
 import model.Gender;
 import model.Role;
+import model.User;
 import util.SessionManager;
 
 import javax.swing.*;
@@ -238,17 +239,16 @@ public class DoctorPanel extends JPanel {
 
         ArrayList<Doctor> doctors = doctorController.getAllDoctors();
 
-        for (int i = 0; i < doctors.size(); i++) {
-            Doctor d = doctors.get(i);
+        for (Doctor d : doctors) {
             tableModel.addRow(new Object[]{
-                d.getDoctorId(),
-                d.getName(),
-                d.getAge(),
-                d.getGender(),   
-                d.getSpecialization(),
-                d.getLicenseNo(),
-                d.getPhone(),
-                d.getDepartment()
+                    d.getDoctorId(),
+                    d.getName(),
+                    d.getAge(),
+                    d.getGender(),
+                    d.getSpecialization(),
+                    d.getLicenseNo(),
+                    d.getPhone(),
+                    d.getDepartment()
             });
         }
 
@@ -259,7 +259,7 @@ public class DoctorPanel extends JPanel {
     private void handleSearch() {
         String keyword = tfSearch.getText().trim();
 
-        if (keyword.equals("")) {
+        if (keyword.trim().isEmpty()) {
             loadTable();
             return;
         }
@@ -268,17 +268,16 @@ public class DoctorPanel extends JPanel {
 
         ArrayList<Doctor> results = doctorController.searchDoctors(keyword);
 
-        for (int i = 0; i < results.size(); i++) {
-            Doctor d = results.get(i);
+        for (Doctor d : results) {
             tableModel.addRow(new Object[]{
-                d.getDoctorId(),
-                d.getName(),
-                d.getAge(),
-                d.getGender(),
-                d.getSpecialization(),
-                d.getLicenseNo(),
-                d.getPhone(),
-                d.getDepartment()
+                    d.getDoctorId(),
+                    d.getName(),
+                    d.getAge(),
+                    d.getGender(),
+                    d.getSpecialization(),
+                    d.getLicenseNo(),
+                    d.getPhone(),
+                    d.getDepartment()
             });
         }
     }
@@ -286,10 +285,7 @@ public class DoctorPanel extends JPanel {
     // fill form with selected doctor's data
     private void populateForm(String doctorId) {
         Doctor d = doctorController.getDoctorById(doctorId);
-
-        if (d == null) {
-            return;
-        }
+        if (d == null) return;
 
         selectedDoctorId = doctorId;
 
@@ -339,6 +335,9 @@ public class DoctorPanel extends JPanel {
 
         try {
             int age = Integer.parseInt(tfAge.getText().trim());
+            if (age < 18) {
+                JOptionPane.showMessageDialog(this, JOptionPane.ERROR_MESSAGE);
+            }
             Gender gender = (Gender) cbGender.getSelectedItem();
 
             doctorController.updateDoctor(
@@ -353,7 +352,6 @@ public class DoctorPanel extends JPanel {
                 tfDepartment.getText().trim()
             );
 
-            JOptionPane.showMessageDialog(this, "Doctor updated!");
             loadTable();
 
         } catch (NumberFormatException e) {
@@ -398,8 +396,10 @@ public class DoctorPanel extends JPanel {
     }
 
     // only admin can add, update, delete doctors
-    private void checkRole() {
-        Role role = SessionManager.getInstance().getCurrentUser().getRole();
+    public void checkRole() {
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        if (currentUser == null) return;
+        Role role = currentUser.getRole();
 
         if (role != Role.ADMIN) {
             btnAdd.setVisible(false);
@@ -413,6 +413,27 @@ public class DoctorPanel extends JPanel {
             tfLicenseNo.setEditable(false);
             tfDepartment.setEditable(false);
             cbGender.setEnabled(false);
+        } else {
+            btnAdd.setVisible(true);
+            btnUpdate.setVisible(true);
+            btnDelete.setVisible(true);
+            tfName.setEditable(true);
+            tfAge.setEditable(true);
+            tfPhone.setEditable(true);
+            tfEmail.setEditable(true);
+            tfSpecialization.setEditable(true);
+            tfLicenseNo.setEditable(true);
+            tfDepartment.setEditable(true);
+            cbGender.setEnabled(true);
+        }
+    }
+
+    @Override
+    public void setVisible(boolean aFlag) {
+        super.setVisible(aFlag);
+        if (aFlag) {
+            checkRole();
+            loadTable();
         }
     }
 }

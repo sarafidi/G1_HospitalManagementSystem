@@ -28,7 +28,7 @@ public class AuthController {
 
     public User findByUsername(String username) {
         return users.stream()
-                .filter(u -> u.getUsername().equalsIgnoreCase(username) && u.isActive())
+                .filter(u -> u.getUsername().equalsIgnoreCase(username))
                 .findFirst()
                 .orElse(null);
     }
