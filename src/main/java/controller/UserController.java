@@ -2,10 +2,7 @@ package controller;
 
 import model.Role;
 import model.User;
-import util.DataStore;
-import util.HashUtil;
-import util.IDGenerator;
-import util.Validator;
+import util.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -44,15 +41,30 @@ public class UserController {
         return null;
     }
 
-    public String deactivateUser(String userId) {
+    public String handleUserActive(String userId) {
         // find user by userId, if not found return error
         User user = findByUserId(userId);
         if (user == null) return "Error: User not found!";
 
+        String currUserId = SessionManager.getInstance().getCurrentUser().getUserId();
+        if (user.getUserId().equalsIgnoreCase(currUserId))
+            return "Error: Cannot deactivate your own account!";
+
         // set isActive = false
-        user.setActive(false);
+        user.setActive(!user.isActive());
 
         // save and return null
+        DataStore.getInstance().saveUsers();
+        return null;
+    }
+
+    public String deletedUser(String userId) {
+        // find user by userId, if not found return error
+        User user = findByUserId(userId);
+        if (user == null) return "Error: User not found!";
+
+        // delete user
+        users.removeIf(u -> u.getUserId().equalsIgnoreCase(userId));
         DataStore.getInstance().saveUsers();
         return null;
     }
