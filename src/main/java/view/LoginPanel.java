@@ -7,15 +7,15 @@ import java.awt.*;
 import static util.UIConfig.*;
 
 public class LoginPanel extends JPanel {
-    private AuthController authController;
+    private final AuthController authController;
     // Runnable callback - lets LoginPanel notify MainFrame without LoginPanel knowing
     // about MainFrame's internals, keeps panels loosely coupled
-    private Runnable onLoginSuccess;
+    private final Runnable onLoginSuccess;
 
-    private JTextField usernameField;           // appropriate for username
-    private JPasswordField passwordField;       // same as JTextField but masks characters
-    private JButton loginButton;                // clickable trigger for form submission
-    private JLabel errorLabel;                  // easier to update than showing a new dialog for every failed attempt
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JButton loginButton;
+    private JLabel errorLabel;      // easier to update than showing a new dialog for every failed attempt
 
     public LoginPanel(AuthController authController, Runnable onLoginSuccess) {
         this.authController = authController;
@@ -78,11 +78,11 @@ public class LoginPanel extends JPanel {
         passwordField.setText("admin");
 
         // triggers handleLogin() on button click
-        loginButton.addActionListener(e -> handleLogin());
+        loginButton.addActionListener(_ -> handleLogin());
 
         // triggers handleLogin() on keyboard entered
-        usernameField.addActionListener(e -> handleLogin());
-        passwordField.addActionListener(e -> handleLogin());
+        usernameField.addActionListener(_ -> handleLogin());
+        passwordField.addActionListener(_ -> handleLogin());
     }
 
     private void handleLogin() {

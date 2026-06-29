@@ -3,6 +3,7 @@ package controller;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import model.Appointment;
@@ -58,91 +59,22 @@ public class ReportController {
      * Returns filtered total appointments by status based on filter criteria.
      */
     public int getFilteredTotalAppointmentsByStatus(String status, String doctorId, String period) {
-        ArrayList<Appointment> filtered = new ArrayList<>(dataStore.getAppointments());
+        List<Appointment> filtered = filterAppointments(doctorId, period);
 
-        // Filter by doctor
-        if (doctorId != null && !doctorId.isEmpty()) {
+        if (status != null && !status.isEmpty() && !status.equals("All Status")) {
             filtered = filtered.stream()
-                    .filter(a -> a.getDoctorId().equals(doctorId))
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .filter(a -> a.getStatus().toString().equals(status))
+                    .collect(Collectors.toList());
         }
 
-        // Filter by period
-        if (period != null && !period.isEmpty() && !period.equals("All")) {
-            LocalDateTime now = LocalDateTime.now();
-            filtered = filtered.stream()
-                    .filter(a -> {
-                        LocalDateTime apptTime = parseDateTime(a.getAppointmentDateTime());
-                        if (apptTime == null) {
-                            return false;
-                        }
-                        switch (period) {
-                            case "Today":
-                                return apptTime.toLocalDate().equals(now.toLocalDate());
-                            case "This Week":
-                                return apptTime.isAfter(now.minusDays(7));
-                            case "This Month":
-                                return apptTime.getMonth().equals(now.getMonth())
-                                        && apptTime.getYear() == now.getYear();
-                            case "Past":
-                                return apptTime.isBefore(now);
-                            case "Upcoming":
-                                return apptTime.isAfter(now);
-                            default:
-                                return true;
-                        }
-                    })
-                    .collect(Collectors.toCollection(ArrayList::new));
-        }
-
-        // Filter by status
-        return (int) filtered.stream()
-                .filter(a -> a.getStatus().toString().equals(status))
-                .count();
+        return filtered.size();
     }
 
     /**
      * Returns filtered total appointments based on filter criteria.
      */
     public int getFilteredTotalAppointments(String doctorId, String period) {
-        ArrayList<Appointment> filtered = new ArrayList<>(dataStore.getAppointments());
-
-        // Filter by doctor
-        if (doctorId != null && !doctorId.isEmpty()) {
-            filtered = filtered.stream()
-                    .filter(a -> a.getDoctorId().equals(doctorId))
-                    .collect(Collectors.toCollection(ArrayList::new));
-        }
-
-        // Filter by period
-        if (period != null && !period.isEmpty() && !period.equals("All")) {
-            LocalDateTime now = LocalDateTime.now();
-            filtered = filtered.stream()
-                    .filter(a -> {
-                        LocalDateTime apptTime = parseDateTime(a.getAppointmentDateTime());
-                        if (apptTime == null) {
-                            return false;
-                        }
-                        switch (period) {
-                            case "Today":
-                                return apptTime.toLocalDate().equals(now.toLocalDate());
-                            case "This Week":
-                                return apptTime.isAfter(now.minusDays(7));
-                            case "This Month":
-                                return apptTime.getMonth().equals(now.getMonth())
-                                        && apptTime.getYear() == now.getYear();
-                            case "Past":
-                                return apptTime.isBefore(now);
-                            case "Upcoming":
-                                return apptTime.isAfter(now);
-                            default:
-                                return true;
-                        }
-                    })
-                    .collect(Collectors.toCollection(ArrayList::new));
-        }
-
-        return filtered.size();
+        return filterAppointments(doctorId, period).size();
     }
 
     /**
@@ -174,48 +106,13 @@ public class ReportController {
     public ArrayList<String[]> getFilteredDoctorSchedule(
             String doctorId, String status, String period, String patientSearch) {
 
-        ArrayList<Appointment> filtered = new ArrayList<>(dataStore.getAppointments());
-
-        // Filter by doctor
-        if (doctorId != null && !doctorId.isEmpty()) {
-            filtered = filtered.stream()
-                    .filter(a -> a.getDoctorId().equals(doctorId))
-                    .collect(Collectors.toCollection(ArrayList::new));
-        }
+        List<Appointment> filtered = filterAppointments(doctorId, period);
 
         // Filter by status
         if (status != null && !status.isEmpty() && !status.equals("All Status")) {
             filtered = filtered.stream()
                     .filter(a -> a.getStatus().toString().equals(status))
-                    .collect(Collectors.toCollection(ArrayList::new));
-        }
-
-        // Filter by period
-        if (period != null && !period.isEmpty() && !period.equals("All")) {
-            LocalDateTime now = LocalDateTime.now();
-            filtered = filtered.stream()
-                    .filter(a -> {
-                        LocalDateTime apptTime = parseDateTime(a.getAppointmentDateTime());
-                        if (apptTime == null) {
-                            return false;
-                        }
-                        switch (period) {
-                            case "Today":
-                                    return apptTime.toLocalDate().equals(now.toLocalDate());
-                            case "This Week":
-                                    return apptTime.isAfter(now.minusDays(7));
-                            case "This Month":
-                                    return apptTime.getMonth().equals(now.getMonth())
-                                            && apptTime.getYear() == now.getYear();
-                            case "Past":
-                                    return apptTime.isBefore(now);
-                            case "Upcoming":
-                                    return apptTime.isAfter(now);
-                            default:
-                                    return true;
-                        }
-                    })
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .collect(Collectors.toList());
         }
 
         // Filter by patient name
@@ -223,7 +120,7 @@ public class ReportController {
             String search = patientSearch.trim().toLowerCase();
             filtered = filtered.stream()
                     .filter(a -> getPatientName(a.getPatientId()).toLowerCase().contains(search))
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .collect(Collectors.toList());
         }
 
         // Convert to String array format with NAMES (not IDs)
@@ -281,6 +178,45 @@ public class ReportController {
     }
 
     // --- Helper Methods ---
+
+    /**
+     * Helper method to filter appointments by doctor and period.
+     * Prevents code duplication (DRY principle).
+     */
+    private List<Appointment> filterAppointments(String doctorId, String period) {
+        List<Appointment> filtered = new ArrayList<>(dataStore.getAppointments());
+
+        // Filter by doctor
+        if (doctorId != null && !doctorId.isEmpty()) {
+            filtered = filtered.stream()
+                    .filter(a -> a.getDoctorId().equals(doctorId))
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by period
+        if (period != null && !period.isEmpty() && !period.equals("All")) {
+            LocalDateTime now = LocalDateTime.now();
+            filtered = filtered.stream()
+                    .filter(a -> {
+                        LocalDateTime apptTime = parseDateTime(a.getAppointmentDateTime());
+                        if (apptTime == null) {
+                            return false;
+                        }
+                        return switch (period) {
+                            case "Today" -> apptTime.toLocalDate().equals(now.toLocalDate());
+                            case "This Week" -> apptTime.isAfter(now.minusDays(7));
+                            case "This Month" -> apptTime.getMonth().equals(now.getMonth())
+                                    && apptTime.getYear() == now.getYear();
+                            case "Past" -> apptTime.isBefore(now);
+                            case "Upcoming" -> apptTime.isAfter(now);
+                            default -> true;
+                        };
+                    })
+                    .collect(Collectors.toList());
+        }
+        return filtered;
+    }
+
     /**
      * Gets doctor name from doctor ID. If not found, returns "Unknown Doctor".
      */
@@ -294,8 +230,7 @@ public class ReportController {
     }
 
     /**
-     * Gets patient name from patient ID. If not found, returns "Unknown
-     * Patient".
+     * Gets patient name from patient ID. If not found, returns "Unknown Patient".
      */
     private String getPatientName(String patientId) {
         for (Patient p : dataStore.getPatients()) {

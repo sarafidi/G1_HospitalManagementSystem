@@ -31,6 +31,7 @@ public class MedicalNoteController {
     }
 
     // Retrieve all medical notes
+    @SuppressWarnings("unused")
     public List<MedicalNote> getAllMedicalNotes() {
         return dataStore.getMedicalNotes();
     }

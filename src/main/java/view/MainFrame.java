@@ -4,14 +4,9 @@ import java.awt.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 
 import controller.*;
 import model.Role;
@@ -34,18 +29,16 @@ public class MainFrame extends JFrame {
 
     // controllers — created once, injected into panels that need them
     // reason: one controller instance shared across the frame avoids duplicate DataStore calls
-    private AuthController authController;
-    private UserController userController;
+    private final AuthController authController;
+    private final UserController userController;
     private DoctorController doctorController;
-    private AppointmentController appointmentController;
-    private MedicalNoteController medicalNoteController;
+    private final AppointmentController appointmentController;
+    private final MedicalNoteController medicalNoteController;
 
     // panels owned by Member 1
     private LoginPanel loginPanel;
     private UserPanel userPanel;
 
-    // TODO: After all models completed
-    // placeholder panels for teammates' modules
     // reason: allows MainFrame to compile before teammates finish their panels
     private JPanel appointmentPanel;
     private JPanel patientPanel;
@@ -57,8 +50,6 @@ public class MainFrame extends JFrame {
     private JButton userMgmtBtn;
     private JButton medicalNotesButton;
     private JButton refreshButton;
-
-    private Border borderDefault = new EmptyBorder(10, 15, 10, 15);
 
     public MainFrame() {
         // reason: controllers created here, injected into panels — panels never create controllers themselves
@@ -101,17 +92,17 @@ public class MainFrame extends JFrame {
         refreshButton = new JButton("Refresh Data");
         refreshButton.setBackground(new Color(220, 220, 220));
 
-        dashboardButton.addActionListener(e -> showPanel("LOGIN"));
-        appointmentsButton.addActionListener(e -> showPanel("APPOINTMENTS"));
-        patientsButton.addActionListener(e -> showPanel("PATIENTS"));
-        doctorsButton.addActionListener(e -> showPanel("DOCTORS"));
-        medicalNotesButton.addActionListener(e -> showPanel("MEDICAL_NOTES"));
-        reportsButton.addActionListener(e -> showPanel("REPORTS"));
-        userMgmtBtn.addActionListener(e -> showPanel("USER_MANAGEMENT"));
-        logoutButton.addActionListener(e -> handleLogout());
+        dashboardButton.addActionListener(_ -> showPanel("LOGIN"));
+        appointmentsButton.addActionListener(_ -> showPanel("APPOINTMENTS"));
+        patientsButton.addActionListener(_ -> showPanel("PATIENTS"));
+        doctorsButton.addActionListener(_ -> showPanel("DOCTORS"));
+        medicalNotesButton.addActionListener(_ -> showPanel("MEDICAL_NOTES"));
+        reportsButton.addActionListener(_ -> showPanel("REPORTS"));
+        userMgmtBtn.addActionListener(_ -> showPanel("USER_MANAGEMENT"));
+        logoutButton.addActionListener(_ -> handleLogout());
 
         // Refresh button action listener to refresh data in the currently visible panel
-        refreshButton.addActionListener(e -> {
+        refreshButton.addActionListener(_ -> {
             if (userPanel != null && userPanel.isVisible()) userPanel.setVisible(true);
             if (patientPanel != null && patientPanel.isVisible()) patientPanel.setVisible(true);
             if (doctorPanel != null && doctorPanel.isVisible()) doctorPanel.setVisible(true);
