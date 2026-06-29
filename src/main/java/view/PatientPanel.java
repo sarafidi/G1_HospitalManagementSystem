@@ -17,7 +17,6 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
 public class PatientPanel extends JPanel {
-
     PatientController patientController = new PatientController();
 
     // table to show all patients

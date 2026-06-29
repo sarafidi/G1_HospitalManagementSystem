@@ -1,15 +1,11 @@
 package view;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.*;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +20,8 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -31,8 +29,7 @@ import controller.AppointmentController;
 import exception.DuplicateSlotException;
 import model.*;
 import util.DataStore;
-import util.SessionManager;
-import util.UIConfig;
+import util.IDGenerator;
 
 import static util.UIConfig.*;
 
@@ -55,6 +52,11 @@ public class AppointmentPanel extends JPanel {
     // UI Components - Table
     private JTable table;
     private DefaultTableModel tableModel;
+
+    // Filter Components
+    private JComboBox<String> filterDoctorCombo;
+    private JButton btnFilter;
+    private JButton btnClearFilter;
 
     public AppointmentPanel() {
         setLayout(new BorderLayout(10, 10));
@@ -127,7 +129,7 @@ public class AppointmentPanel extends JPanel {
             gbc.fill = GridBagConstraints.NONE;
             gbc.anchor = GridBagConstraints.LINE_END;
 
-            JPanel buttonGroupPanel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 5, 0));
+            JPanel buttonGroupPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 
                 // Book Button
                 btnBook = new JButton("Book");
@@ -162,7 +164,7 @@ public class AppointmentPanel extends JPanel {
                     String apptId = tableModel.getValueAt(modelRow, 0).toString();
                     String currentStatus = tableModel.getValueAt(modelRow, 4).toString();
 
-                    // Check if the selected appointment is already cancelled
+                    // Check if the selected appointment is already canceled
                     if (currentStatus.equals("CANCELLED")) {
                         JOptionPane.showMessageDialog(this, "Cancelled appointments cannot be updated!", "Update Error", JOptionPane.ERROR_MESSAGE);
                         return;
@@ -194,7 +196,7 @@ public class AppointmentPanel extends JPanel {
                     JOptionPane.showMessageDialog(this, "Appointment notes for " + apptId + " have been updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 });
 
-                // Cancel Button Logic: Mark Appointment as Cancelled with Reason
+                // Cancel Button Logic: Mark Appointment as Canceled with Reason
                 btnCancel.addActionListener(e -> {
                     int selectedRow = table.getSelectedRow();
                     if (selectedRow == -1) {
@@ -269,12 +271,12 @@ public class AppointmentPanel extends JPanel {
                 
                 if (value != null) { 
                     String status = value.toString();
-                    if (status.equalsIgnoreCase("SCHEDULED")) {
-                        c.setBackground(new Color(255, 239, 150)); c.setForeground(Color.BLACK);
-                    } else if (status.equalsIgnoreCase("COMPLETED")) {
-                        c.setBackground(new Color(175, 238, 175)); c.setForeground(Color.BLACK);
-                    } else if (status.equalsIgnoreCase("CANCELLED")) {
-                        c.setBackground(new Color(255, 182, 193)); c.setForeground(Color.BLACK);
+                    if (status.equalsIgnoreCase(AppStatus.SCHEDULED.toString())) {
+                        STATUS_SCHEDULED(c);
+                    } else if (status.equalsIgnoreCase(AppStatus.COMPLETED.toString())) {
+                        STATUS_COMPLETED(c);
+                    } else if (status.equalsIgnoreCase(AppStatus.CANCELLED.toString())) {
+                        STATUS_CANCELLED(c);
                     }
                 }
                 return c;
@@ -314,9 +316,9 @@ public class AppointmentPanel extends JPanel {
             table.getColumnModel().getColumn(5).setPreferredWidth(300);
 
             // Table Row Click Logic: Populate Form Fields for Update
-            table.addMouseListener(new java.awt.event.MouseAdapter() {
+            table.addMouseListener(new MouseAdapter() {
                 @Override
-                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                public void mouseClicked(MouseEvent evt) {
                     int selectedRow = table.getSelectedRow();
                     if (selectedRow != -1) {
                         int modelRow = table.convertRowIndexToModel(selectedRow);
@@ -341,19 +343,19 @@ public class AppointmentPanel extends JPanel {
 //                        txtDate.setBackground(Color.LIGHT_GRAY);
                         txtDate.setForeground(Color.BLACK);
 
-                        for (java.awt.event.MouseListener ml : txtPatientId.getMouseListeners()) { txtPatientId.removeMouseListener(ml); }
-                        for (java.awt.event.MouseListener ml : txtDoctorId.getMouseListeners()) { txtDoctorId.removeMouseListener(ml); }
-                        for (java.awt.event.MouseListener ml : comboTime.getMouseListeners()) { comboTime.removeMouseListener(ml); }
+                        for (MouseListener ml : txtPatientId.getMouseListeners()) { txtPatientId.removeMouseListener(ml); }
+                        for (MouseListener ml : txtDoctorId.getMouseListeners()) { txtDoctorId.removeMouseListener(ml); }
+                        for (MouseListener ml : comboTime.getMouseListeners()) { comboTime.removeMouseListener(ml); }
 
-                        java.awt.event.MouseAdapter mouseShield = new java.awt.event.MouseAdapter() {
-                            @Override public void mousePressed(java.awt.event.MouseEvent e) { e.consume(); }
-                            @Override public void mouseClicked(java.awt.event.MouseEvent e) { e.consume(); }
+                        MouseAdapter mouseShield = new MouseAdapter() {
+                            @Override public void mousePressed(MouseEvent e) { e.consume(); }
+                            @Override public void mouseClicked(MouseEvent e) { e.consume(); }
                         };
 
                         // Non-editable fields - Patient ID
                         txtPatientId.setEditable(false);
                         txtPatientId.addMouseListener(mouseShield);
-                        for (java.awt.Component comp : txtPatientId.getComponents()) {
+                        for (Component comp : txtPatientId.getComponents()) {
                             comp.setEnabled(false); 
                             comp.addMouseListener(mouseShield); 
                         }
@@ -363,7 +365,7 @@ public class AppointmentPanel extends JPanel {
                         // Non-editable fields - Doctor ID
                         txtDoctorId.setEditable(false);
                         txtDoctorId.addMouseListener(mouseShield);
-                        for (java.awt.Component comp : txtDoctorId.getComponents()) {
+                        for (Component comp : txtDoctorId.getComponents()) {
                             comp.setEnabled(false);
                             comp.addMouseListener(mouseShield);
                         }
@@ -372,14 +374,14 @@ public class AppointmentPanel extends JPanel {
 
                         // Non-editable fields - Time Slot
                         comboTime.addMouseListener(mouseShield);
-                        for (java.awt.Component comp : comboTime.getComponents()) {
+                        for (Component comp : comboTime.getComponents()) {
                             comp.setEnabled(false);
                             comp.addMouseListener(mouseShield);
                         }
                         comboTime.setRenderer(new javax.swing.DefaultListCellRenderer() {
                             @Override
-                            public java.awt.Component getListCellRendererComponent(javax.swing.JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                                java.awt.Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                            public Component getListCellRendererComponent(javax.swing.JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                                 c.setForeground(Color.BLACK);
                                 c.setBackground(Color.LIGHT_GRAY);
                                 return c;
@@ -390,7 +392,32 @@ public class AppointmentPanel extends JPanel {
                 }
             });
 
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        // Filter Panel
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 5));
+        Border innerTitle = BorderFactory.createTitledBorder("Filter Appointments");
+        Border outerMargin = BorderFactory.createEmptyBorder(5, 0, 15, 0);
+        filterPanel.setBorder(BorderFactory.createCompoundBorder(outerMargin, innerTitle));
+
+        filterDoctorCombo = new JComboBox<>();
+        filterDoctorCombo.setPreferredSize(new Dimension(150, 25));
+        btnFilter = new JButton("Filter");
+        btnClearFilter = new JButton("Clear Filter");
+        
+        filterPanel.add(new JLabel("Doctor ID:"));
+        filterPanel.add(filterDoctorCombo);
+        filterPanel.add(btnFilter);
+        filterPanel.add(btnClearFilter);
+        
+        btnFilter.addActionListener(e -> loadTableData());
+        btnClearFilter.addActionListener(e -> {
+            filterDoctorCombo.setSelectedItem("");
+            loadTableData();
+        });
+
+        JPanel centerContainer = new JPanel(new BorderLayout());
+        centerContainer.add(filterPanel, BorderLayout.NORTH);
+        centerContainer.add(new JScrollPane(table), BorderLayout.CENTER);
+        add(centerContainer, BorderLayout.CENTER);
         
         loadTableData();
         btnBook.addActionListener(e -> handleBookAppointment());
@@ -416,16 +443,6 @@ public class AppointmentPanel extends JPanel {
             return;
         }
 
-        if (!pId.matches("^PAT-\\d{4}$")) {
-            JOptionPane.showMessageDialog(this, "Format for Patient ID is incorrect! Must follow the format PAT-XXXX.", "Format Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-//        if (!dId.matches("^DOC-\\d{4}$")) {
-//            JOptionPane.showMessageDialog(this, "Format for Doctor ID is incorrect! Must follow the format DOC-XXXX.", "Format Error", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-
         try {
             LocalDate date = LocalDate.parse(dateStr);
             LocalTime time = LocalTime.parse(timeStr);
@@ -445,7 +462,7 @@ public class AppointmentPanel extends JPanel {
             }
 
             // Generate a unique appointment ID
-            String apptId = "APT-" + String.format("%04d", (System.currentTimeMillis() % 10000)); 
+            String apptId = IDGenerator.generateAppointmentId();
             Appointment newAppt = new Appointment(apptId, pId, dId, dateTimeStr, AppStatus.SCHEDULED, notes);
             controller.bookAppointment(newAppt);
 
@@ -464,31 +481,14 @@ public class AppointmentPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Debugging", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    // Load Data into Table
-    private void loadTableData() {
-        tableModel.setRowCount(0);
-        List<Appointment> list = controller.getAllAppointments();
 
-        list.sort((appt1, appt2) -> appt1.getAppointmentDateTime().compareTo(appt2.getAppointmentDateTime()));
-        for (Appointment appt : list) {
-            Object[] row = {
-                appt.getAppointmentId(),
-                appt.getPatientId(),
-                appt.getDoctorId(),
-                appt.getAppointmentDateTime(),
-                appt.getStatus(),
-                appt.getNotes()
-            };
-            tableModel.addRow(row);
-        }
-    }
+
 
     // Clear and Reset Form Fields
     private void clearAndResetForm() {
-        for (java.awt.event.MouseListener ml : txtPatientId.getMouseListeners()) { txtPatientId.removeMouseListener(ml); }
-        for (java.awt.event.MouseListener ml : txtDoctorId.getMouseListeners()) { txtDoctorId.removeMouseListener(ml); }
-        for (java.awt.event.MouseListener ml : comboTime.getMouseListeners()) { comboTime.removeMouseListener(ml); }
+        for (MouseListener ml : txtPatientId.getMouseListeners()) { txtPatientId.removeMouseListener(ml); }
+        for (MouseListener ml : txtDoctorId.getMouseListeners()) { txtDoctorId.removeMouseListener(ml); }
+        for (MouseListener ml : comboTime.getMouseListeners()) { comboTime.removeMouseListener(ml); }
 
         // Date
         txtDate.setEditable(true);
@@ -497,15 +497,15 @@ public class AppointmentPanel extends JPanel {
 
         // Patient ID
         txtPatientId.setEditable(true);
-        for (java.awt.Component comp : txtPatientId.getComponents()) {
+        for (Component comp : txtPatientId.getComponents()) {
             comp.setEnabled(true);
-            for (java.awt.event.MouseListener ml : comp.getMouseListeners()) { comp.removeMouseListener(ml); }
+            for (MouseListener ml : comp.getMouseListeners()) { comp.removeMouseListener(ml); }
         }
         txtPatientId.getEditor().getEditorComponent().setBackground(Color.WHITE);
 
         // Doctor ID
-        for (java.awt.Component comp : txtDoctorId.getComponents()) {
-            for (java.awt.event.MouseListener ml : comp.getMouseListeners()) { comp.removeMouseListener(ml); }
+        for (Component comp : txtDoctorId.getComponents()) {
+            for (MouseListener ml : comp.getMouseListeners()) { comp.removeMouseListener(ml); }
         }
         txtDoctorId.getEditor().getEditorComponent().setBackground(Color.WHITE);
         configureDoctorSelection();
@@ -514,9 +514,9 @@ public class AppointmentPanel extends JPanel {
         }
 
         // Time Slot
-        for (java.awt.Component comp : comboTime.getComponents()) {
+        for (Component comp : comboTime.getComponents()) {
             comp.setEnabled(true);
-            for (java.awt.event.MouseListener ml : comp.getMouseListeners()) { comp.removeMouseListener(ml); }
+            for (MouseListener ml : comp.getMouseListeners()) { comp.removeMouseListener(ml); }
         }
         comboTime.setBackground(Color.WHITE);
         comboTime.setRenderer(new javax.swing.DefaultListCellRenderer());
@@ -524,17 +524,17 @@ public class AppointmentPanel extends JPanel {
         // Set default values
         txtPatientId.setSelectedItem("");
         txtDoctorId.setSelectedItem("");
+        filterDoctorCombo.setSelectedItem("");
         txtNotes.setText("");
-        txtDate.setText(java.time.LocalDate.now().toString());
+        txtDate.setText(LocalDate.now().toString());
         comboTime.setSelectedIndex(0);
     }
 
     // Refresh Panel Data
     public void refreshPanel() {
         isDoctorLoggedIn = controller.isDoctor();
-        clearForm();                 
+        clearForm();
         loadTableData();
-        loadAppointmentsData();    
         setFormEnabled(true);
         configureDoctorSelection();
     }
@@ -545,19 +545,32 @@ public class AppointmentPanel extends JPanel {
             txtDoctorId.addItem(isDoctorLoggedIn);
             txtDoctorId.setSelectedItem(isDoctorLoggedIn);
             txtDoctorId.setEnabled(false);
+
+            // Lock filter for doctor
+            filterDoctorCombo.removeAllItems();
+            filterDoctorCombo.addItem(isDoctorLoggedIn);
+            filterDoctorCombo.setSelectedItem(isDoctorLoggedIn);
+            filterDoctorCombo.setEnabled(false);
+            btnFilter.setEnabled(false);
+            btnClearFilter.setEnabled(false);
         } else {
             txtDoctorId.setEnabled(true);
-//            txtDoctorId.setEditable(true);
+            
+            // Enable filter for Admin/Receptionist
+            filterDoctorCombo.setEnabled(true);
+            btnFilter.setEnabled(true);
+            btnClearFilter.setEnabled(true);
             
             // Populate with all active doctors
             txtDoctorId.removeAllItems();
-//            txtDoctorId.addItem("");
+            
+            filterDoctorCombo.removeAllItems();
+            filterDoctorCombo.addItem(""); // add blank for "All"
+
             for (User u : dataStore.getUsers()) {
                 if (u.getRole() == Role.DOCTOR && u.isActive()) {
-//                    String dId = u.getDoctorId();
-//                    if (dId != null && !dId.trim().isEmpty() && !dId.equals("—")) {
-                        txtDoctorId.addItem(u.getDoctorId());
-//                    }
+                    txtDoctorId.addItem(u.getDoctorId());
+                    filterDoctorCombo.addItem(u.getDoctorId());
                 }
             }
         }
@@ -571,13 +584,11 @@ public class AppointmentPanel extends JPanel {
             txtDoctorId.setSelectedItem("");
         }
         txtNotes.setText("");
-        txtDate.setText(java.time.LocalDate.now().toString());
+        txtDate.setText(LocalDate.now().toString());
         comboTime.setSelectedIndex(0);
     }
 
     private void setFormEnabled(boolean enabled) {
-//        txtPatientId.setEditable(enabled);
-//        txtDoctorId.setEditable(enabled);
         txtDate.setEditable(enabled);
         txtNotes.setEditable(enabled);
         
@@ -600,15 +611,25 @@ public class AppointmentPanel extends JPanel {
         txtNotes.setForeground(Color.BLACK);
     }
 
-    private void loadAppointmentsData() {
+    private void loadTableData() {
         tableModel.setRowCount(0);
         List<Appointment> list = controller.getAllAppointments();
 
+        String activeFilterDoc = null;
         if (isDoctorLoggedIn != null) {
-            list = list.stream()
-                    .filter(a -> a.getDoctorId().equalsIgnoreCase(isDoctorLoggedIn))
-                    .collect(Collectors.toList());
+            activeFilterDoc = isDoctorLoggedIn;
+        } else if (filterDoctorCombo != null) {
+            String selected = (String) filterDoctorCombo.getSelectedItem();
+            if (selected != null && !selected.trim().isEmpty()) {
+                activeFilterDoc = selected;
+            }
+        }
 
+        if (activeFilterDoc != null) {
+            String finalDocId = activeFilterDoc;
+            list = list.stream()
+                    .filter(a -> a.getDoctorId().equalsIgnoreCase(finalDocId))
+                    .collect(Collectors.toList());
         }
 
         list.sort((a1, a2) -> a1.getAppointmentId().compareTo(a2.getAppointmentId()));

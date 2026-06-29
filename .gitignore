@@ -32,7 +32,7 @@ bin/
 .DS_Store
 
 ### DB Setup ###
-#/data/
+/data/
 
 ### target folder ###
 /target/

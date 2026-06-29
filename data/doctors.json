@@ -12,11 +12,12 @@
   },
   {
     "doctorId": "DOC-0002",
-    "specialization": "-",
-    "licenseNo": "-",
-    "department": "-",
+    "specialization": "Ped",
+    "licenseNo": "LIC-12312",
+    "department": "Pediatrician",
     "name": "nikki13",
     "age": 0,
+    "gender": "FEMALE",
     "phone": "0986788888",
     "email": "nikki13@gmail.com"
   },
@@ -29,5 +30,38 @@
     "age": 0,
     "phone": "0989878787",
     "email": "nikki14@gmail.com"
+  },
+  {
+    "doctorId": "DOC-0004",
+    "specialization": "Surgery",
+    "licenseNo": "LIC-12312",
+    "department": "Neurosurgeon",
+    "name": "nikki14",
+    "age": 21,
+    "gender": "MALE",
+    "phone": "0989878787",
+    "email": "nikki14@gmail.com"
+  },
+  {
+    "doctorId": "DOC-0005",
+    "specialization": "Surgery",
+    "licenseNo": "LIC-12312",
+    "department": "Neurosurgeon",
+    "name": "nikki14",
+    "age": 21,
+    "gender": "MALE",
+    "phone": "0989878787",
+    "email": "nikki14@gmail.com"
+  },
+  {
+    "doctorId": "DOC-0006",
+    "specialization": "Surgery",
+    "licenseNo": "LIC-12123",
+    "department": "Neurosurgeon",
+    "name": "nikki",
+    "age": 21,
+    "gender": "MALE",
+    "phone": "0989878787",
+    "email": "nikki@gmail.com"
   }
 ]

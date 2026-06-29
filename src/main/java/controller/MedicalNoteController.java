@@ -1,21 +1,21 @@
 package controller;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.MedicalNote;
+import util.DataStore;
 
 public class MedicalNoteController {
-    private List<MedicalNote> notesList;
-
-    public MedicalNoteController() {
-        this.notesList = new ArrayList<>();
-    }
+    private DataStore dataStore = DataStore.getInstance();
+    private List<MedicalNote> notesList = dataStore.getMedicalNotes();
 
     // Save or update a medical note
     public void submitMedicalNote(MedicalNote note) {
         notesList.removeIf(n -> n.getAppointmentId().equals(note.getAppointmentId()));
-        notesList.add(note);        
+        notesList.add(note);
+        dataStore.saveMedicalNotes();
     }
 
     // Update an existing medical note
@@ -26,6 +26,8 @@ public class MedicalNoteController {
                 break;
             }
         }
+        note.setUpdatedAt(LocalDateTime.now());
+        dataStore.saveMedicalNotes();
     }
 
     // Retrieve all medical notes

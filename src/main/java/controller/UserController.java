@@ -23,6 +23,8 @@ public class UserController {
         if (tempPassword.trim().isEmpty()) return "Error: Password is empty!";
         // check if role is not null
         if (role == null) return "Error: Role is not picked!";
+        // check if valid phone num
+        if (!Validator.isValidPhone(phone)) return "Error: Phone must start with 0 and be 10-11 digits!";
 
         // if all checks passed
         String password = HashUtil.sha256(tempPassword);

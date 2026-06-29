@@ -299,8 +299,19 @@ public class DoctorPanel extends JPanel {
         tfDepartment.setText(d.getDepartment());
     }
 
+    // verify if current user has admin role
+    private boolean checkAdminPermission() {
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
+            JOptionPane.showMessageDialog(this, "Only Admin is allowed to perform this action.", "Permission Denied", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
     // handle clicking Add button
     private void handleAdd() {
+        if (!checkAdminPermission()) return;
         try {
             int age = Integer.parseInt(tfAge.getText().trim());
             Gender gender = (Gender) cbGender.getSelectedItem();
@@ -328,6 +339,7 @@ public class DoctorPanel extends JPanel {
 
     // handle clicking Update button
     private void handleUpdate() {
+        if (!checkAdminPermission()) return;
         if (selectedDoctorId == null) {
             JOptionPane.showMessageDialog(this, "Please select a doctor from the table first.");
             return;
@@ -363,6 +375,7 @@ public class DoctorPanel extends JPanel {
 
     // handle clicking Delete button
     private void handleDelete() {
+        if (!checkAdminPermission()) return;
         if (selectedDoctorId == null) {
             JOptionPane.showMessageDialog(this, "Please select a doctor from the table first.");
             return;
@@ -398,34 +411,20 @@ public class DoctorPanel extends JPanel {
     // only admin can add, update, delete doctors
     public void checkRole() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
-        if (currentUser == null) return;
-        Role role = currentUser.getRole();
+        Role role = currentUser != null ? currentUser.getRole() : null;
+        boolean isAdmin = (role == Role.ADMIN);
 
-        if (role != Role.ADMIN) {
-            btnAdd.setVisible(false);
-            btnUpdate.setVisible(false);
-            btnDelete.setVisible(false);
-            tfName.setEditable(false);
-            tfAge.setEditable(false);
-            tfPhone.setEditable(false);
-            tfEmail.setEditable(false);
-            tfSpecialization.setEditable(false);
-            tfLicenseNo.setEditable(false);
-            tfDepartment.setEditable(false);
-            cbGender.setEnabled(false);
-        } else {
-            btnAdd.setVisible(true);
-            btnUpdate.setVisible(true);
-            btnDelete.setVisible(true);
-            tfName.setEditable(true);
-            tfAge.setEditable(true);
-            tfPhone.setEditable(true);
-            tfEmail.setEditable(true);
-            tfSpecialization.setEditable(true);
-            tfLicenseNo.setEditable(true);
-            tfDepartment.setEditable(true);
-            cbGender.setEnabled(true);
-        }
+        btnAdd.setVisible(isAdmin);
+        btnUpdate.setVisible(isAdmin);
+        btnDelete.setVisible(isAdmin);
+        tfName.setEditable(isAdmin);
+        tfAge.setEditable(isAdmin);
+        tfPhone.setEditable(isAdmin);
+        tfEmail.setEditable(isAdmin);
+        tfSpecialization.setEditable(isAdmin);
+        tfLicenseNo.setEditable(isAdmin);
+        tfDepartment.setEditable(isAdmin);
+        cbGender.setEnabled(isAdmin);
     }
 
     @Override

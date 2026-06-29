@@ -55,6 +55,7 @@ public class MainFrame extends JFrame {
 
     // reason: so onLoginSuccess() can show/hide them by role
     private JButton userMgmtBtn;
+    private JButton medicalNotesButton;
     private JButton refreshButton;
 
     private Border borderDefault = new EmptyBorder(10, 15, 10, 15);
@@ -63,7 +64,6 @@ public class MainFrame extends JFrame {
         // reason: controllers created here, injected into panels — panels never create controllers themselves
         this.authController = new AuthController();
         this.userController = new UserController();
-//        this.doctorController = new DoctorController();
         this.appointmentController = new AppointmentController();
         this.medicalNoteController = new MedicalNoteController();
             initComponents();
@@ -93,22 +93,13 @@ public class MainFrame extends JFrame {
         JButton appointmentsButton = new JButton("Appointments");
         JButton patientsButton = new JButton("Patients");
         JButton doctorsButton = new JButton("Doctors");
-        JButton medicalNotesButton = new JButton("Medical Notes");
+        medicalNotesButton = new JButton("Medical Notes");
         JButton reportsButton = new JButton("Reports");
         JButton logoutButton = new JButton("Logout");
         userMgmtBtn = new JButton("User Management");
 
         refreshButton = new JButton("Refresh Data");
         refreshButton.setBackground(new Color(220, 220, 220));
-
-//        dashboardButton.setBorder(borderDefault);
-//        appointmentsButton.setBorder(borderDefault);
-//        patientsButton.setBorder(borderDefault);
-//        doctorsButton.setBorder(borderDefault);
-//        medicalNotesButton.setBorder(borderDefault);
-//        reportsButton.setBorder(borderDefault);
-//        userMgmtBtn.setBorder(borderDefault);
-//        logoutButton.setBorder(borderDefault);
 
         dashboardButton.addActionListener(e -> showPanel("LOGIN"));
         appointmentsButton.addActionListener(e -> showPanel("APPOINTMENTS"));
@@ -194,7 +185,8 @@ public class MainFrame extends JFrame {
 
         navPanel.setVisible(true);
         userMgmtBtn.setVisible(user.getRole() == Role.ADMIN);
-
+        medicalNotesButton.setVisible(user.getRole() == Role.DOCTOR);
+        
         if (user.getRole() == Role.ADMIN) {
             showPanel("USER_MANAGEMENT");
         }
@@ -215,6 +207,13 @@ public class MainFrame extends JFrame {
     }
 
     public void showPanel(String name) {
+        if (name.equals("MEDICAL_NOTES")) {
+            if (medicalNotePanel == null) {
+                medicalNotePanel = new MedicalNotesPanel(appointmentController, medicalNoteController);
+                cardPanel.add(medicalNotePanel, "MEDICAL_NOTES");
+            }
+            ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
+        }
         cardLayout.show(cardPanel, name);
     }
 }

@@ -1,10 +1,14 @@
 package model;
 
+import java.time.LocalDateTime;
+
 public class MedicalNote {
     private String noteId;
     private String appointmentId;
     private String patientId;
     private String doctorId;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     
     // SOAP Elements
     private String subjective;
@@ -28,6 +32,8 @@ public class MedicalNote {
         this.appointmentId = appointmentId;
         this.patientId = patientId;
         this.doctorId = doctorId;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
         this.subjective = subjective;
         this.objective = objective;
         this.assessment = assessment;
@@ -44,6 +50,9 @@ public class MedicalNote {
     public String getAppointmentId() { return appointmentId; }
     public String getPatientId() { return patientId; }
     public String getDoctorId() { return doctorId; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+
     public String getSubjective() { return subjective; }
     public String getObjective() { return objective; }
     public String getAssessment() { return assessment; }
@@ -60,6 +69,9 @@ public class MedicalNote {
     public void setAppointmentId(String appointmentId) { this.appointmentId = appointmentId; }
     public void setPatientId(String patientId) { this.patientId = patientId; }
     public void setDoctorId(String doctorId) { this.doctorId = doctorId; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
     public void setSubjective(String subjective) { this.subjective = subjective; }
     public void setObjective(String objective) { this.objective = objective; }
     public void setAssessment(String assessment) { this.assessment = assessment; }

@@ -8,7 +8,7 @@
     "age": 12,
     "gender": "FEMALE",
     "phone": "0986671287",
-    "email": "lili@gmai;.com"
+    "email": "lili@gmail.com"
   },
   {
     "patientId": "PAT-0002",
@@ -42,5 +42,16 @@
     "gender": "FEMALE",
     "phone": "0457777777",
     "email": "shuri@gmail.com"
+  },
+  {
+    "patientId": "PAT-0005",
+    "bloodType": "AB+",
+    "medicalHistory": "",
+    "registeredDate": "2026-06-29",
+    "name": "Ali",
+    "age": 13,
+    "gender": "MALE",
+    "phone": "0928391312",
+    "email": "ali@gmail.com"
   }
 ]

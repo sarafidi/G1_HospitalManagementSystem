@@ -23,12 +23,30 @@ public class DoctorController {
         // check required fields
         checkFieldNotEmpty(name, specialization, licenseNo);
 
+        if (!Validator.isValidEmail(email)) {
+            throw new IllegalArgumentException("Error: Email is invalid.");
+        }
+
         if (!Validator.isValidPhone(phone)) {
             throw new IllegalArgumentException("Phone must start with 0 and be 10-11 digits.");
         }
 
         if (!Validator.isValidAge(age)) {
             throw new IllegalArgumentException("Age must be between 0 and 125.");
+        }
+
+        // check if name, email, or license number already exists
+        ArrayList<Doctor> doctors = dataStore.getDoctors();
+        for (Doctor d : doctors) {
+            if (d.getName().equalsIgnoreCase(name)) {
+                throw new IllegalArgumentException("Doctor name already exists.");
+            }
+            if (d.getEmail().equalsIgnoreCase(email)) {
+                throw new IllegalArgumentException("Email already exists.");
+            }
+            if (d.getLicenseNo().equalsIgnoreCase(licenseNo)) {
+                throw new IllegalArgumentException("License number already exists.");
+            }
         }
 
         // generate a new doctor id like DOC-0001
@@ -95,11 +113,17 @@ public class DoctorController {
             throw new IllegalArgumentException("Age not eligible, must be more than 17");
         }
 
-        if (licenseNo.trim().isEmpty()) {
-            // check if license number already exists
-            ArrayList<Doctor> doctors = dataStore.getDoctors();
-            for (Doctor doctor : doctors) {
-                if (doctor.getLicenseNo().equals(licenseNo)) {
+        // check if name, email, or license number already exists on other doctors
+        ArrayList<Doctor> doctors = dataStore.getDoctors();
+        for (Doctor doctor : doctors) {
+            if (!doctor.getDoctorId().equals(doctorId)) {
+                if (doctor.getName().equalsIgnoreCase(name)) {
+                    throw new IllegalArgumentException("Doctor name already exists.");
+                }
+                if (doctor.getEmail().equalsIgnoreCase(email)) {
+                    throw new IllegalArgumentException("Email already exists.");
+                }
+                if (doctor.getLicenseNo().equalsIgnoreCase(licenseNo)) {
                     throw new IllegalArgumentException("License number already exists.");
                 }
             }
