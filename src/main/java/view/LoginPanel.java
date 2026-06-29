@@ -100,7 +100,13 @@ public class LoginPanel extends JPanel {
             return;
         }
 
-        if (!authController.findByUsername(usernameEntered).isActive()) {
+        model.User user = authController.findByUsername(usernameEntered);
+        if (user == null) {
+            errorLabel.setText("Invalid username or password!");
+            return;
+        }
+
+        if (!user.isActive()) {
             errorLabel.setText("User is NOT active!");
             return;
         }

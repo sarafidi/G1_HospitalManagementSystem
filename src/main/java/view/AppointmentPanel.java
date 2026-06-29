@@ -21,14 +21,12 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import controller.AppointmentController;
 import exception.DuplicateSlotException;
 import model.*;
-import util.DataStore;
 import util.IDGenerator;
 
 import static util.UIConfig.*;
@@ -36,27 +34,26 @@ import static util.UIConfig.*;
 public class AppointmentPanel extends JPanel {
 
     private final AppointmentController controller = new AppointmentController();
-    private final DataStore dataStore = DataStore.getInstance();
     private String isDoctorLoggedIn;
 
     // UI Components - Form Fields
-    private JComboBox<String> txtPatientId;
-    private JComboBox<String> txtDoctorId;
-    private JComboBox<String> comboTime;
-    private JTextField txtDate;
-    private JTextArea txtNotes;
-    private JButton btnBook;
-    private JButton btnCancel;
-    private JButton btnUpdate;
+    private final JComboBox<String> txtPatientId;
+    private final JComboBox<String> txtDoctorId;
+    private final JComboBox<String> comboTime;
+    private final JTextField txtDate;
+    private final JTextArea txtNotes;
+    private final JButton btnBook;
+    private final JButton btnCancel;
+    private final JButton btnUpdate;
 
     // UI Components - Table
     private JTable table;
     private DefaultTableModel tableModel;
 
     // Filter Components
-    private JComboBox<String> filterDoctorCombo;
-    private JButton btnFilter;
-    private JButton btnClearFilter;
+    private final JComboBox<String> filterDoctorCombo;
+    private final JButton btnFilter;
+    private final JButton btnClearFilter;
 
     public AppointmentPanel() {
         setLayout(new BorderLayout(10, 10));
@@ -82,8 +79,8 @@ public class AppointmentPanel extends JPanel {
             txtPatientId = new JComboBox<>();
             txtPatientId.setEditable(true);
             // Populate with all patients
-            for (Patient p : dataStore.getPatients()) {
-                txtPatientId.addItem(p.getPatientId());
+            for (String pId : controller.getActivePatientIds()) {
+                txtPatientId.addItem(pId);
             }
             formPanel.add(txtPatientId, gbc);
 
@@ -153,7 +150,7 @@ public class AppointmentPanel extends JPanel {
             formPanel.add(buttonGroupPanel, gbc);
 
                 // Update Button Logic: Replace Existing Appointment Notes
-                btnUpdate.addActionListener(e -> {
+                btnUpdate.addActionListener(_ -> {
                     int selectedRow = table.getSelectedRow();
                     if (selectedRow == -1) {
                         JOptionPane.showMessageDialog(this, "Please select an appointment from the table to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
@@ -197,7 +194,7 @@ public class AppointmentPanel extends JPanel {
                 });
 
                 // Cancel Button Logic: Mark Appointment as Canceled with Reason
-                btnCancel.addActionListener(e -> {
+                btnCancel.addActionListener(_ -> {
                     int selectedRow = table.getSelectedRow();
                     if (selectedRow == -1) {
                         JOptionPane.showMessageDialog(this, "Please select an appointment to cancel.", "No Selection", JOptionPane.WARNING_MESSAGE);
@@ -225,13 +222,13 @@ public class AppointmentPanel extends JPanel {
                         if (list.get(i).getAppointmentId().equals(apptId)) {
                             Appointment original = list.get(i);
                             String updatedNotes = original.getNotes() + " [CANCELLED REASON: " + reason.trim() + "]";
-                            
+
                             Appointment cancelledAppt = new Appointment(
-                                original.getAppointmentId(), 
-                                original.getPatientId(), 
-                                original.getDoctorId(), 
-                                original.getAppointmentDateTime(), 
-                                AppStatus.CANCELLED, 
+                                original.getAppointmentId(),
+                                original.getPatientId(),
+                                original.getDoctorId(),
+                                original.getAppointmentDateTime(),
+                                AppStatus.CANCELLED,
                                 updatedNotes
                             );
 
@@ -359,7 +356,6 @@ public class AppointmentPanel extends JPanel {
                             comp.setEnabled(false); 
                             comp.addMouseListener(mouseShield); 
                         }
-//                        txtPatientId.getEditor().getEditorComponent().setBackground(Color.LIGHT_GRAY);
                         txtPatientId.getEditor().getEditorComponent().setForeground(Color.BLACK);
 
                         // Non-editable fields - Doctor ID
@@ -369,7 +365,6 @@ public class AppointmentPanel extends JPanel {
                             comp.setEnabled(false);
                             comp.addMouseListener(mouseShield);
                         }
-//                        txtDoctorId.getEditor().getEditorComponent().setBackground(Color.LIGHT_GRAY);
                         txtDoctorId.getEditor().getEditorComponent().setForeground(Color.BLACK);
 
                         // Non-editable fields - Time Slot
@@ -408,8 +403,8 @@ public class AppointmentPanel extends JPanel {
         filterPanel.add(btnFilter);
         filterPanel.add(btnClearFilter);
         
-        btnFilter.addActionListener(e -> loadTableData());
-        btnClearFilter.addActionListener(e -> {
+        btnFilter.addActionListener(_ -> loadTableData());
+        btnClearFilter.addActionListener(_ -> {
             filterDoctorCombo.setSelectedItem("");
             loadTableData();
         });
@@ -420,13 +415,13 @@ public class AppointmentPanel extends JPanel {
         add(centerContainer, BorderLayout.CENTER);
         
         loadTableData();
-        btnBook.addActionListener(e -> handleBookAppointment());
+        btnBook.addActionListener(_ -> handleBookAppointment());
     }
 
     // Handle Booking Appointment
     private void handleBookAppointment() {
         String pId = (txtPatientId.getSelectedItem() != null) ? txtPatientId.getSelectedItem().toString().trim().toUpperCase() : "";
-        String dId = "";
+        String dId;
         String dateStr = txtDate.getText().trim();
         String timeStr = comboTime.getSelectedItem().toString();
         String notes = txtNotes.getText().trim();
@@ -535,7 +530,7 @@ public class AppointmentPanel extends JPanel {
         isDoctorLoggedIn = controller.isDoctor();
         clearForm();
         loadTableData();
-        setFormEnabled(true);
+        setFormEnabled();
         configureDoctorSelection();
     }
 
@@ -586,18 +581,18 @@ public class AppointmentPanel extends JPanel {
         comboTime.setSelectedIndex(0);
     }
 
-    private void setFormEnabled(boolean enabled) {
-        txtDate.setEditable(enabled);
-        txtNotes.setEditable(enabled);
+    private void setFormEnabled() {
+        txtDate.setEditable(true);
+        txtNotes.setEditable(true);
         
-        txtPatientId.setEnabled(enabled);
-        txtDoctorId.setEnabled(enabled);
+        txtPatientId.setEnabled(true);
+        txtDoctorId.setEnabled(true);
         
-        btnBook.setEnabled(enabled);
-        btnCancel.setEnabled(enabled);
-        btnUpdate.setEnabled(enabled);
+        btnBook.setEnabled(true);
+        btnCancel.setEnabled(true);
+        btnUpdate.setEnabled(true);
 
-        Color bg = enabled ? Color.WHITE : Color.WHITE;
+        Color bg = Color.WHITE;
         txtPatientId.setBackground(bg);
         txtDoctorId.setBackground(bg);
         txtDate.setBackground(bg);
@@ -646,6 +641,7 @@ public class AppointmentPanel extends JPanel {
     }
 
     // ID Suggestions
+    @SuppressWarnings("unused")
     private void setupIdSuggestions() {
         String[] samplePatients = {"PAT-0001", "PAT-0042", "PAT-0123", "PAT-0999"};
         for (String pat : samplePatients) {

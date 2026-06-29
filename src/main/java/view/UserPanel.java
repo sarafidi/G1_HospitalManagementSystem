@@ -50,7 +50,7 @@ public class UserPanel extends JPanel implements MouseListener {
     private String selectedUserId;
 
     // tracks user's active status button
-    JButton deactivateUserButton;
+    private JButton deactivateUserButton;
 
     public UserPanel(UserController userController, DoctorController doctorController, Runnable onLogout) {
         this.userController = userController;
@@ -353,4 +353,13 @@ public class UserPanel extends JPanel implements MouseListener {
 
     @Override
     public void mouseExited(MouseEvent e) { }
+
+    @Override
+    public void setVisible(boolean aFlag) {
+        super.setVisible(aFlag);
+        if (aFlag) {
+            refreshTable();
+            clearForm();
+        }
+    }
 }

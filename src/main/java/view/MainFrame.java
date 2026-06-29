@@ -112,12 +112,15 @@ public class MainFrame extends JFrame {
 
         // Refresh button action listener to refresh data in the currently visible panel
         refreshButton.addActionListener(e -> {
-            if (medicalNotePanel != null) {
-                ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
+            if (userPanel != null && userPanel.isVisible()) userPanel.setVisible(true);
+            if (patientPanel != null && patientPanel.isVisible()) patientPanel.setVisible(true);
+            if (doctorPanel != null && doctorPanel.isVisible()) doctorPanel.setVisible(true);
+            if (reportPanel != null && reportPanel.isVisible()) reportPanel.setVisible(true);
+            if (appointmentPanel != null && appointmentPanel.isVisible()) {
+                ((view.AppointmentPanel) appointmentPanel).refreshPanel();
             }
-
-            if (appointmentPanel != null) {
-                ((AppointmentPanel) appointmentPanel).refreshPanel();
+            if (medicalNotePanel != null && medicalNotePanel.isVisible()) {
+                ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
             }
 
             javax.swing.JOptionPane.showMessageDialog(this, "All system data has been refreshed!", "Refresh Success", 

@@ -13,11 +13,7 @@ import util.DataStore;
 
 public class ReportController {
 
-    private DataStore dataStore;
-
-    public ReportController() {
-        this.dataStore = DataStore.getInstance();
-    }
+    private final DataStore dataStore = DataStore.getInstance();
 
     /**
      * Returns total number of patients.

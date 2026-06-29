@@ -83,4 +83,13 @@ public class AppointmentController {
         }
         return doctorIds;
     }
+
+    // Get list of patient IDs
+    public List<String> getActivePatientIds() {
+        List<String> patientIds = new ArrayList<>();
+        for (model.Patient p : dataStore.getPatients()) {
+            patientIds.add(p.getPatientId());
+        }
+        return patientIds;
+    }
 }

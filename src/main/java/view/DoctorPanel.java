@@ -18,32 +18,31 @@ import java.util.ArrayList;
 
 public class DoctorPanel extends JPanel {
 
-    // handle all doctor data operations
-    DoctorController doctorController = new DoctorController();
+    private final DoctorController doctorController = new DoctorController();
 
     // table to show all doctors
-    JTable doctorTable;
-    DefaultTableModel tableModel;
+    private JTable doctorTable;
+    private DefaultTableModel tableModel;
 
     // form input fields
-    JTextField tfName;
-    JTextField tfAge;
-    JTextField tfPhone;
-    JTextField tfEmail;
-    JTextField tfSpecialization;
-    JTextField tfLicenseNo;
-    JTextField tfDepartment;
-    JTextField tfSearch;
-    JComboBox<Gender> cbGender;  // uses Gender enum from model package
+    private JTextField tfName;
+    private JTextField tfAge;
+    private JTextField tfPhone;
+    private JTextField tfEmail;
+    private JTextField tfSpecialization;
+    private JTextField tfLicenseNo;
+    private JTextField tfDepartment;
+    private JTextField tfSearch;
+    private JComboBox<Gender> cbGender;  // uses Gender enum from model package
 
     // action buttons
-    JButton btnAdd;
-    JButton btnUpdate;
-    JButton btnDelete;
-    JButton btnClear;
+    private JButton btnAdd;
+    private JButton btnUpdate;
+    private JButton btnDelete;
+    private JButton btnClear;
 
     // stores the id of the doctor currently selected in the table
-    String selectedDoctorId = null;
+    private String selectedDoctorId = null;
 
     // sets up the whole UI
     public DoctorPanel() {

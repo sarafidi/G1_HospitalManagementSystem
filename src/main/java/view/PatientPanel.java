@@ -17,31 +17,31 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
 public class PatientPanel extends JPanel {
-    PatientController patientController = new PatientController();
+    private final PatientController patientController = new PatientController();
 
     // table to show all patients
-    JTable patientTable;
-    DefaultTableModel tableModel;
+    private JTable patientTable;
+    private DefaultTableModel tableModel;
 
     // form input fields
-    JTextField tfName;
-    JTextField tfAge;
-    JTextField tfPhone;
-    JTextField tfEmail;
-    JTextField tfBloodType;
-    JTextField tfSearch;
-    JComboBox<Gender> cbGender;  
-    JTextArea taHistory;
+    private JTextField tfName;
+    private JTextField tfAge;
+    private JTextField tfPhone;
+    private JTextField tfEmail;
+    private JTextField tfBloodType;
+    private JTextField tfSearch;
+    private JComboBox<Gender> cbGender;  
+    private JTextArea taHistory;
 
     // action buttons
-    JButton btnAdd;
-    JButton btnUpdate;
-    JButton btnDelete;
-    JButton btnClear;
-    JButton btnSearch;
+    private JButton btnAdd;
+    private JButton btnUpdate;
+    private JButton btnDelete;
+    private JButton btnClear;
+    private JButton btnSearch;
 
     // stores the id of the patient currently selected in the table
-    String selectedPatientId = null;
+    private String selectedPatientId = null;
 
     //sets up the whole UI
     public PatientPanel() {
@@ -403,34 +403,19 @@ public class PatientPanel extends JPanel {
     // doctor role can only view
     public void checkRole() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            return;
-        }
-        Role role = currentUser.getRole();
+        Role role = currentUser != null ? currentUser.getRole() : null;
+        boolean canEdit = (role == Role.ADMIN || role == Role.RECEPTIONIST);
 
-        if (role == Role.DOCTOR) {
-            btnAdd.setVisible(false);
-            btnUpdate.setVisible(false);
-            btnDelete.setVisible(false);
-            tfName.setEditable(false);
-            tfAge.setEditable(false);
-            tfPhone.setEditable(false);
-            tfEmail.setEditable(false);
-            tfBloodType.setEditable(false);
-            taHistory.setEditable(false);
-            cbGender.setEnabled(false);
-        } else {
-            btnAdd.setVisible(true);
-            btnUpdate.setVisible(true);
-            btnDelete.setVisible(true);
-            tfName.setEditable(true);
-            tfAge.setEditable(true);
-            tfPhone.setEditable(true);
-            tfEmail.setEditable(true);
-            tfBloodType.setEditable(true);
-            taHistory.setEditable(true);
-            cbGender.setEnabled(true);
-        }
+        btnAdd.setVisible(canEdit);
+        btnUpdate.setVisible(canEdit);
+        btnDelete.setVisible(canEdit);
+        tfName.setEditable(canEdit);
+        tfAge.setEditable(canEdit);
+        tfPhone.setEditable(canEdit);
+        tfEmail.setEditable(canEdit);
+        tfBloodType.setEditable(canEdit);
+        taHistory.setEditable(canEdit);
+        cbGender.setEnabled(canEdit);
     }
 
     @Override

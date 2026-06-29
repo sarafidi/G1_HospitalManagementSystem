@@ -8,104 +8,91 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class UserController {
-    private ArrayList<User> users = DataStore.getInstance().getUsers();
+    private final DataStore dataStore = DataStore.getInstance();
 
     public String addUser(String username, String name, String email, String phone, Role role, String tempPassword, String doctorId) {
-        boolean usernameTaken = users.stream()
-                .anyMatch(u -> u.getUsername().equalsIgnoreCase(username));
-
-        // check if username is not empty
+        // Validation checks
         if (!Validator.isNonEmpty(username)) return "Error: Username is empty!";
-        // check if email is valid
         if (!Validator.isValidEmail(email)) return "Error: Email is invalid!";
-        if (usernameTaken) return "Error: Username is already taken!";
-        // check if password is not empty
-        if (tempPassword.trim().isEmpty()) return "Error: Password is empty!";
-        // check if role is not null
+        if (isUsernameTaken(username)) return "Error: Username is already taken!";
+        if (tempPassword == null || tempPassword.trim().isEmpty()) return "Error: Password is empty!";
         if (role == null) return "Error: Role is not picked!";
-        // check if valid phone num
         if (!Validator.isValidPhone(phone)) return "Error: Phone must start with 0 and be 10-11 digits!";
 
-        // if all checks passed
         String password = HashUtil.sha256(tempPassword);
         String newUserId = IDGenerator.generateUserId();
 
-        // create user object
         User user = new User(newUserId, username, name, email,
                 phone, password, role, true, true,
                 doctorId, LocalDateTime.now().toString());
 
-        // add to the list
-        users.add(user);
-
-        // save users
-        DataStore.getInstance().saveUsers();
+        dataStore.getUsers().add(user);
+        dataStore.saveUsers();
         return null;
     }
 
     public String handleUserActive(String userId) {
-        // find user by userId, if not found return error
         User user = findByUserId(userId);
         if (user == null) return "Error: User not found!";
 
-        String currUserId = SessionManager.getInstance().getCurrentUser().getUserId();
-        if (user.getUserId().equalsIgnoreCase(currUserId))
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        if (currentUser != null && user.getUserId().equalsIgnoreCase(currentUser.getUserId())) {
             return "Error: Cannot deactivate your own account!";
+        }
 
-        // set isActive = false
         user.setActive(!user.isActive());
-
-        // save and return null
-        DataStore.getInstance().saveUsers();
+        dataStore.saveUsers();
         return null;
     }
 
     public String deletedUser(String userId) {
-        // find user by userId, if not found return error
         User user = findByUserId(userId);
         if (user == null) return "Error: User not found!";
 
-        // delete user
-        users.removeIf(u -> u.getUserId().equalsIgnoreCase(userId));
-        DataStore.getInstance().saveUsers();
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        if (currentUser != null && user.getUserId().equalsIgnoreCase(currentUser.getUserId())) {
+            return "Error: Cannot delete your own account!";
+        }
+
+        dataStore.getUsers().removeIf(u -> u.getUserId().equalsIgnoreCase(userId));
+        dataStore.saveUsers();
         return null;
     }
 
-    public ArrayList<User> getAllUsers() { return users; }
+    public ArrayList<User> getAllUsers() { 
+        return dataStore.getUsers(); 
+    }
 
     public String updatePassword(String userId, String newPassword) {
-        // find user by userId
         User user = findByUserId(userId);
         if (user == null) return "Error: User not found!";
 
-        // hash new password
         String passwordHash = HashUtil.sha256(newPassword);
-
-        // setPasswordHash, setFirstLogin(false)
         user.setPasswordHash(passwordHash);
         user.setFirstLogin(false);
 
-        // save and return null
-        DataStore.getInstance().saveUsers();
+        dataStore.saveUsers();
         return null;
     }
 
     public String forcePasswordChange(String userId) {
-        // find user by userId
         User user = findByUserId(userId);
         if (user == null) return "Error: User not found!";
 
         user.setFirstLogin(true);
-
-        DataStore.getInstance().saveUsers();
+        dataStore.saveUsers();
         return null;
     }
 
     private User findByUserId(String userId) {
-        return users.stream()
+        return dataStore.getUsers().stream()
                 .filter(u -> u.getUserId().equals(userId))
                 .findFirst()
                 .orElse(null);
     }
 
+    private boolean isUsernameTaken(String username) {
+        return dataStore.getUsers().stream()
+                .anyMatch(u -> u.getUsername().equalsIgnoreCase(username));
+    }
 }
