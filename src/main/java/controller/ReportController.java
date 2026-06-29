@@ -228,13 +228,30 @@ public class ReportController {
     }
 
     private LocalDateTime parseDateTime(String dateTimeText) {
-        if (dateTimeText == null || dateTimeText.isEmpty()) {
+        if (dateTimeText == null || dateTimeText.trim().isEmpty()) {
             return null;
         }
-        try {
-            return LocalDateTime.parse(dateTimeText);
-        } catch (Exception e) {
-            return null;
+
+        String value = dateTimeText.trim();
+
+        // Data from appointments.json is saved like: 2026-06-29 11:30
+        // LocalDateTime.parse() only accepts: 2026-06-29T11:30
+        // So we support both formats here.
+        DateTimeFormatter[] formats = new DateTimeFormatter[]{
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+            DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")
+        };
+
+        for (DateTimeFormatter formatter : formats) {
+            try {
+                return LocalDateTime.parse(value, formatter);
+            } catch (Exception ignored) {
+                // Try next format
+            }
         }
+
+        return null;
     }
 }

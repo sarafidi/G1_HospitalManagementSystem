@@ -2,10 +2,17 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
@@ -15,18 +22,25 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 
 import controller.ReportController;
 import model.Doctor;
@@ -36,6 +50,12 @@ import util.SessionManager;
 
 public class ReportPanel extends JPanel {
 
+    private static final Color PAGE_BG = new Color(238, 238, 238);
+    private static final Color CARD_BG = Color.WHITE;
+    private static final Color BORDER = new Color(210, 210, 210);
+    private static final Color TEXT = new Color(35, 35, 35);
+    private static final Color MUTED = new Color(110, 110, 110);
+
     private ReportController reportController;
     private JTable scheduleTable;
     private DefaultTableModel tableModel;
@@ -44,14 +64,13 @@ public class ReportPanel extends JPanel {
     private JLabel totalScheduledLabel;
     private JLabel totalCompletedLabel;
     private JLabel lastUpdatedLabel;
-    private JLabel doctorScheduleTitleLabel;      // Shows doctor name
-    private JLabel patientFilterDisplayLabel;      // ★ NEW: Shows patient name
-    private JLabel resultsCountLabel;              // ★ NEW: Shows count summary
+    private JLabel doctorScheduleTitleLabel;
+    private JLabel patientFilterDisplayLabel;
+    private JLabel resultsCountLabel;
     private JButton refreshButton;
     private JButton printButton;
     private JPanel contentPanel;
 
-    // --- Search/Filter Components ---
     private JComboBox<String> filterDoctorCombo;
     private JComboBox<String> filterStatusCombo;
     private JComboBox<String> filterPeriodCombo;
@@ -59,138 +78,211 @@ public class ReportPanel extends JPanel {
     private JButton filterButton;
     private JButton clearFilterButton;
 
-    // Store doctors
     private ArrayList<Doctor> allDoctors;
+    private boolean isLoadingFilters = false;
 
     public ReportPanel() {
         this.reportController = new ReportController();
         this.allDoctors = new ArrayList<>();
         initComponents();
-        // checkRoleAccess() and loadAllData() moved to setVisible() to avoid popups on startup
     }
 
     private void initComponents() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout());
+        setBackground(PAGE_BG);
 
-        // --- Content Panel ---
-        contentPanel = new JPanel(new BorderLayout(10, 10));
+        contentPanel = new JPanel(new BorderLayout(0, 8));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(12, 16, 8, 16));
+        contentPanel.setBackground(PAGE_BG);
 
-        // --- Top Panel: Title + Buttons ---
-        JPanel topPanel = new JPanel(new BorderLayout(10, 10));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 10));
+        ScrollablePanel mainPanel = new ScrollablePanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBackground(PAGE_BG);
 
-        // Title (Left)
-        JLabel titleLabel = new JLabel("📊 Reports Dashboard");
+        mainPanel.add(createTopPanel());
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(createFilterPanel());
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(createSummaryPanel());
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(createTablePanel());
+
+        JScrollPane pageScroll = new JScrollPane(mainPanel);
+        pageScroll.setBorder(null);
+        pageScroll.getVerticalScrollBar().setUnitIncrement(16);
+        pageScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        contentPanel.add(pageScroll, BorderLayout.CENTER);
+
+        lastUpdatedLabel = new JLabel("", SwingConstants.CENTER);
+        lastUpdatedLabel.setForeground(MUTED);
+        lastUpdatedLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        contentPanel.add(lastUpdatedLabel, BorderLayout.SOUTH);
+
+        add(contentPanel, BorderLayout.CENTER);
+    }
+
+    private JPanel createTopPanel() {
+        JPanel topPanel = createCardPanel(new BorderLayout(10, 10), 12, 18, 12, 18);
+        topPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 66));
+        topPanel.setPreferredSize(new Dimension(10, 66));
+
+        JLabel titleLabel = new JLabel("Reports Dashboard");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        titleLabel.setForeground(TEXT);
         topPanel.add(titleLabel, BorderLayout.WEST);
 
-        // Button Panel (Center)
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        buttonPanel.setOpaque(false);
 
-        refreshButton = new JButton("Refresh Reports");
-        refreshButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        refreshButton = createButton("Refresh Reports", 140, 32);
         refreshButton.addActionListener(e -> {
             loadAllData();
             updateTimestamp();
         });
         buttonPanel.add(refreshButton);
 
-        printButton = new JButton("Print Report");
-        printButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        printButton = createButton("Print Report", 125, 32);
         printButton.addActionListener(e -> printReport());
         buttonPanel.add(printButton);
 
-        topPanel.add(buttonPanel, BorderLayout.CENTER);
-        topPanel.add(new JLabel(), BorderLayout.EAST);
+        topPanel.add(buttonPanel, BorderLayout.EAST);
+        return topPanel;
+    }
 
-        contentPanel.add(topPanel, BorderLayout.NORTH);
+    private JPanel createFilterPanel() {
+        JPanel outer = createCardPanel(new BorderLayout(8, 8), 8, 14, 10, 14);
+        outer.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(BORDER), "Filter Reports"),
+                BorderFactory.createEmptyBorder(6, 12, 8, 12)
+        ));
+        outer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
-        // --- Filter Panel ---
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        filterPanel.setBorder(BorderFactory.createTitledBorder("Filter Reports"));
+        JPanel fields = new JPanel(new GridBagLayout());
+        fields.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 5, 4, 5);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Doctor filter
-        filterPanel.add(new JLabel("Doctor:"));
         filterDoctorCombo = new JComboBox<>();
         filterDoctorCombo.addItem("All Doctors");
-        filterPanel.add(filterDoctorCombo);
+        filterDoctorCombo.setFont(new Font("Arial", Font.PLAIN, 12));
 
-        // Status filter
-        filterPanel.add(new JLabel("Status:"));
         filterStatusCombo = new JComboBox<>(reportController.getAllStatuses());
-        filterPanel.add(filterStatusCombo);
+        filterStatusCombo.setFont(new Font("Arial", Font.PLAIN, 12));
 
-        // Period filter
-        filterPanel.add(new JLabel("Period:"));
         filterPeriodCombo = new JComboBox<>(reportController.getPeriodOptions());
-        filterPanel.add(filterPeriodCombo);
+        filterPeriodCombo.setFont(new Font("Arial", Font.PLAIN, 12));
 
-        // Patient search
-        filterPanel.add(new JLabel("Patient:"));
-        searchPatientField = new JTextField(15);
-        filterPanel.add(searchPatientField);
+        searchPatientField = new JTextField();
+        searchPatientField.setFont(new Font("Arial", Font.PLAIN, 12));
 
-        // Filter buttons
-        filterButton = new JButton("Apply Filter");
+        addFilterField(fields, gbc, 0, "Doctor:", filterDoctorCombo);
+        addFilterField(fields, gbc, 1, "Status:", filterStatusCombo);
+        addFilterField(fields, gbc, 2, "Period:", filterPeriodCombo);
+        addFilterField(fields, gbc, 3, "Patient:", searchPatientField);
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        buttons.setOpaque(false);
+        filterButton = createButton("Apply Filter", 115, 30);
         filterButton.addActionListener(e -> applyFilters());
-        filterPanel.add(filterButton);
+        buttons.add(filterButton);
 
-        clearFilterButton = new JButton("Clear");
+        clearFilterButton = createButton("Clear", 80, 30);
         clearFilterButton.addActionListener(e -> clearFilters());
-        filterPanel.add(clearFilterButton);
+        buttons.add(clearFilterButton);
 
-        contentPanel.add(filterPanel, BorderLayout.NORTH);
+        outer.add(fields, BorderLayout.CENTER);
+        outer.add(buttons, BorderLayout.EAST);
 
-        // --- Summary Panel (4 stats) ---
-        JPanel summaryPanel = new JPanel(new GridLayout(1, 4, 10, 10));
-        summaryPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        filterDoctorCombo.addActionListener(e -> applyFiltersIfReady());
+        filterStatusCombo.addActionListener(e -> applyFiltersIfReady());
+        filterPeriodCombo.addActionListener(e -> applyFiltersIfReady());
+        searchPatientField.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                applyFiltersIfReady();
+            }
 
-        totalPatientsLabel = new JLabel("Patients: 0", SwingConstants.CENTER);
-        totalPatientsLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        totalPatientsLabel.setForeground(new Color(0, 102, 204));
+            public void removeUpdate(DocumentEvent e) {
+                applyFiltersIfReady();
+            }
 
-        totalAppointmentsLabel = new JLabel("Total: 0", SwingConstants.CENTER);
-        totalAppointmentsLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        totalAppointmentsLabel.setForeground(new Color(0, 102, 204));
+            public void changedUpdate(DocumentEvent e) {
+                applyFiltersIfReady();
+            }
+        });
 
-        totalScheduledLabel = new JLabel("Scheduled: 0", SwingConstants.CENTER);
-        totalScheduledLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        totalScheduledLabel.setForeground(new Color(255, 140, 0));
+        return outer;
+    }
 
-        totalCompletedLabel = new JLabel("Completed: 0", SwingConstants.CENTER);
-        totalCompletedLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        totalCompletedLabel.setForeground(new Color(0, 153, 0));
+    private void addFilterField(JPanel panel, GridBagConstraints gbc, int x, String labelText, JComponent field) {
+        gbc.gridx = x * 2;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        JLabel label = new JLabel(labelText);
+        label.setFont(new Font("Arial", Font.BOLD, 12));
+        panel.add(label, gbc);
+
+        gbc.gridx = x * 2 + 1;
+        gbc.weightx = 1;
+        field.setPreferredSize(new Dimension(120, 28));
+        panel.add(field, gbc);
+    }
+
+    private JPanel createSummaryPanel() {
+        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        summaryPanel.setBackground(PAGE_BG);
+        summaryPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 64));
+        summaryPanel.setPreferredSize(new Dimension(10, 64));
+
+        totalPatientsLabel = createStatCard("Patients", "0");
+        totalAppointmentsLabel = createStatCard("Total", "0");
+        totalScheduledLabel = createStatCard("Scheduled", "0");
+        totalCompletedLabel = createStatCard("Completed", "0");
 
         summaryPanel.add(totalPatientsLabel);
         summaryPanel.add(totalAppointmentsLabel);
         summaryPanel.add(totalScheduledLabel);
         summaryPanel.add(totalCompletedLabel);
-        contentPanel.add(summaryPanel, BorderLayout.CENTER);
+        return summaryPanel;
+    }
 
-        // --- Table Panel with Dynamic Titles ---
-        JPanel tableContainer = new JPanel(new BorderLayout(10, 5));
-        tableContainer.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+    private JLabel createStatCard(String title, String value) {
+        JLabel label = new JLabel(makeStatHtml(title, value), SwingConstants.CENTER);
+        label.setOpaque(true);
+        label.setBackground(CARD_BG);
+        label.setForeground(TEXT);
+        label.setFont(new Font("Arial", Font.PLAIN, 12));
+        label.setPreferredSize(new Dimension(135, 56));
+        label.setMinimumSize(new Dimension(135, 56));
+        label.setMaximumSize(new Dimension(135, 56));
+        label.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+        ));
+        return label;
+    }
 
-        // ★ Title Panel: Doctor Name + Patient Name
+    private JPanel createTablePanel() {
+        JPanel tableContainer = createCardPanel(new BorderLayout(8, 8), 12, 14, 10, 14);
+        tableContainer.setPreferredSize(new Dimension(10, 330));
+        tableContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 380));
+
         JPanel titlePanel = new JPanel(new GridLayout(2, 1, 0, 2));
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 10, 0));
+        titlePanel.setOpaque(false);
 
-        // Doctor schedule title
-        doctorScheduleTitleLabel = new JLabel("📋 All Doctors Schedule", SwingConstants.CENTER);
-        doctorScheduleTitleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        doctorScheduleTitleLabel.setForeground(new Color(0, 0, 139));
+        doctorScheduleTitleLabel = new JLabel("All Doctors Schedule", SwingConstants.LEFT);
+        doctorScheduleTitleLabel.setFont(new Font("Arial", Font.BOLD, 15));
+        doctorScheduleTitleLabel.setForeground(TEXT);
         titlePanel.add(doctorScheduleTitleLabel);
 
-        // ★ NEW: Patient filter display
-        patientFilterDisplayLabel = new JLabel("", SwingConstants.CENTER);
-        patientFilterDisplayLabel.setFont(new Font("Arial", Font.ITALIC, 14));
-        patientFilterDisplayLabel.setForeground(new Color(0, 102, 204));
+        patientFilterDisplayLabel = new JLabel("", SwingConstants.LEFT);
+        patientFilterDisplayLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        patientFilterDisplayLabel.setForeground(MUTED);
         patientFilterDisplayLabel.setVisible(false);
         titlePanel.add(patientFilterDisplayLabel);
-
         tableContainer.add(titlePanel, BorderLayout.NORTH);
 
-        // Table
         String[] columns = {"Doctor", "Patient", "Date & Time", "Status"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -200,63 +292,79 @@ public class ReportPanel extends JPanel {
         };
 
         scheduleTable = new JTable(tableModel);
-        scheduleTable.setRowHeight(25);
+        scheduleTable.setRowHeight(28);
+        scheduleTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        scheduleTable.getTableHeader().setReorderingAllowed(false);
         scheduleTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        scheduleTable.getTableHeader().setBackground(new Color(235, 235, 235));
+        scheduleTable.getTableHeader().setForeground(TEXT);
         scheduleTable.setFont(new Font("Arial", Font.PLAIN, 12));
+        scheduleTable.setForeground(TEXT);
+        scheduleTable.setGridColor(new Color(225, 225, 225));
+        scheduleTable.setFillsViewportHeight(true);
+
+        TableColumnModel columnModel = scheduleTable.getColumnModel();
+        columnModel.getColumn(0).setPreferredWidth(160);
+        columnModel.getColumn(1).setPreferredWidth(180);
+        columnModel.getColumn(2).setPreferredWidth(190);
+        columnModel.getColumn(3).setPreferredWidth(150);
 
         JScrollPane scrollPane = new JScrollPane(scheduleTable);
-        scrollPane.setBorder(BorderFactory.createTitledBorder(""));
-
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         tableContainer.add(scrollPane, BorderLayout.CENTER);
 
-        // --- Results Count (Below Table) ---
         resultsCountLabel = new JLabel("", SwingConstants.CENTER);
         resultsCountLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        resultsCountLabel.setForeground(Color.GRAY);
-        resultsCountLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        resultsCountLabel.setForeground(MUTED);
         tableContainer.add(resultsCountLabel, BorderLayout.SOUTH);
 
-        contentPanel.add(tableContainer, BorderLayout.SOUTH);
-
-        // --- Bottom: Last Updated Timestamp ---
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        lastUpdatedLabel = new JLabel("", SwingConstants.CENTER);
-        lastUpdatedLabel.setForeground(Color.GRAY);
-        lastUpdatedLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        lastUpdatedLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-        bottomPanel.add(lastUpdatedLabel, BorderLayout.SOUTH);
-        contentPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        add(contentPanel, BorderLayout.CENTER);
+        return tableContainer;
     }
 
-    /**
-     * Loads all data from DataStore.
-     */
+    private JPanel createCardPanel(LayoutManager layout, int top, int left, int bottom, int right) {
+        JPanel panel = new JPanel(layout);
+        panel.setBackground(CARD_BG);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER),
+                BorderFactory.createEmptyBorder(top, left, bottom, right)
+        ));
+        return panel;
+    }
+
+    private JButton createButton(String text, int width, int height) {
+        JButton button = new JButton(text);
+        button.setPreferredSize(new Dimension(width, height));
+        button.setFocusPainted(false);
+        button.setFont(new Font("Arial", Font.BOLD, 12));
+        return button;
+    }
+
     private void loadAllData() {
+        isLoadingFilters = true;
         allDoctors = reportController.getAllDoctors();
         populateDoctorDropdown();
         loadStats();
-        loadSchedule();
-        updateScheduleTitle("All Doctors", null);
-        updateResultsCount();
+        isLoadingFilters = false;
+        applyFilters();
     }
 
-    /**
-     * Populates the doctor dropdown.
-     */
     private void populateDoctorDropdown() {
+        Object selected = filterDoctorCombo.getSelectedItem();
         filterDoctorCombo.removeAllItems();
         filterDoctorCombo.addItem("All Doctors");
 
         for (Doctor d : allDoctors) {
             filterDoctorCombo.addItem(d.getName());
         }
+
+        if (selected != null) {
+            filterDoctorCombo.setSelectedItem(selected);
+        }
+        if (filterDoctorCombo.getSelectedItem() == null) {
+            filterDoctorCombo.setSelectedIndex(0);
+        }
     }
 
-    /**
-     * Gets doctor ID by name.
-     */
     private String getDoctorIdByName(String doctorName) {
         for (Doctor d : allDoctors) {
             if (d.getName().equals(doctorName)) {
@@ -266,29 +374,21 @@ public class ReportPanel extends JPanel {
         return null;
     }
 
-    /**
-     * ★ NEW: Updates the title above the table with doctor and patient info.
-     */
     private void updateScheduleTitle(String doctorName, String patientName) {
-        // Update doctor title
         if (doctorName == null || doctorName.equals("All Doctors")) {
-            doctorScheduleTitleLabel.setText("📋 All Doctors Schedule");
+            doctorScheduleTitleLabel.setText("All Doctors Schedule");
         } else {
-            doctorScheduleTitleLabel.setText("📋 Schedule for: " + doctorName);
+            doctorScheduleTitleLabel.setText("Schedule for: " + doctorName);
         }
 
-        // Update patient display
         if (patientName != null && !patientName.trim().isEmpty()) {
-            patientFilterDisplayLabel.setText("👤 Patient: " + patientName);
+            patientFilterDisplayLabel.setText("Patient: " + patientName);
             patientFilterDisplayLabel.setVisible(true);
         } else {
             patientFilterDisplayLabel.setVisible(false);
         }
     }
 
-    /**
-     * ★ NEW: Updates the results count below the table.
-     */
     private void updateResultsCount() {
         int rowCount = tableModel.getRowCount();
         int totalCount = reportController.getTotalAppointments();
@@ -301,16 +401,11 @@ public class ReportPanel extends JPanel {
         StringBuilder sb = new StringBuilder();
         sb.append("Showing ").append(rowCount).append(" of ").append(totalCount).append(" appointments");
 
-        // Add doctor info
         if (selectedDoctor != null && !selectedDoctor.equals("All Doctors")) {
             sb.append(" for ").append(selectedDoctor);
         }
-
-        // Add status info
         if (selectedStatus != null && !selectedStatus.equals("All Status")) {
             sb.append(" (").append(selectedStatus);
-
-            // Add period info
             if (selectedPeriod != null && !selectedPeriod.equals("All")) {
                 sb.append(" - ").append(selectedPeriod);
             }
@@ -318,18 +413,21 @@ public class ReportPanel extends JPanel {
         } else if (selectedPeriod != null && !selectedPeriod.equals("All")) {
             sb.append(" (").append(selectedPeriod).append(")");
         }
-
-        // Add patient search info
         if (!patientSearch.isEmpty()) {
             sb.append(" matching \"").append(patientSearch).append("\"");
         }
-
         resultsCountLabel.setText(sb.toString());
     }
 
-    /**
-     * Applies filters and updates the table with filtered data.
-     */
+    private void applyFiltersIfReady() {
+        if (isLoadingFilters || tableModel == null || filterDoctorCombo == null
+                || filterStatusCombo == null || filterPeriodCombo == null
+                || searchPatientField == null) {
+            return;
+        }
+        applyFilters();
+    }
+
     private void applyFilters() {
         String selectedDoctor = (String) filterDoctorCombo.getSelectedItem();
         String selectedStatus = (String) filterStatusCombo.getSelectedItem();
@@ -341,59 +439,48 @@ public class ReportPanel extends JPanel {
             doctorId = getDoctorIdByName(selectedDoctor);
         }
 
-        // Get filtered data
-        ArrayList<String[]> filteredData = reportController.getFilteredDoctorSchedule(
-                doctorId, selectedStatus, selectedPeriod, patientSearch
-        );
+        ArrayList<String[]> filteredData;
+        if (selectedDoctor != null && !selectedDoctor.equals("All Doctors") && doctorId == null) {
+            filteredData = new ArrayList<>();
+        } else {
+            filteredData = reportController.getFilteredDoctorSchedule(
+                    doctorId, selectedStatus, selectedPeriod, patientSearch
+            );
+        }
 
-        // Update table
         tableModel.setRowCount(0);
         for (String[] row : filteredData) {
             tableModel.addRow(row);
         }
 
-        // ★ Update title with doctor and patient name
         updateScheduleTitle(selectedDoctor, patientSearch.isEmpty() ? null : patientSearch);
-
-        // ★ Update results count
         updateResultsCount();
-
         updateTimestamp();
     }
 
-    /**
-     * Clears all filters and shows all data.
-     */
     private void clearFilters() {
+        isLoadingFilters = true;
         filterDoctorCombo.setSelectedIndex(0);
         filterStatusCombo.setSelectedIndex(0);
         filterPeriodCombo.setSelectedIndex(0);
         searchPatientField.setText("");
-
-        // Reset titles
-        updateScheduleTitle("All Doctors", null);
-
-        loadSchedule();
-        updateResultsCount();
-        updateTimestamp();
+        isLoadingFilters = false;
+        applyFilters();
     }
 
-    /**
-     * Loads and displays statistics.
-     */
     public void loadStats() {
-        totalPatientsLabel.setText("Patients: " + reportController.getTotalPatients());
-        totalAppointmentsLabel.setText("Total: " + reportController.getTotalAppointments());
-        totalScheduledLabel.setText("Scheduled: " + reportController.getTotalAppointmentsByStatus("SCHEDULED"));
-        totalCompletedLabel.setText("Completed: " + reportController.getTotalAppointmentsByStatus("COMPLETED"));
+        totalPatientsLabel.setText(makeStatHtml("Patients", String.valueOf(reportController.getTotalPatients())));
+        totalAppointmentsLabel.setText(makeStatHtml("Total", String.valueOf(reportController.getTotalAppointments())));
+        totalScheduledLabel.setText(makeStatHtml("Scheduled", String.valueOf(reportController.getTotalAppointmentsByStatus("SCHEDULED"))));
+        totalCompletedLabel.setText(makeStatHtml("Completed", String.valueOf(reportController.getTotalAppointmentsByStatus("COMPLETED"))));
     }
 
-    /**
-     * Loads all appointments into table.
-     */
+    private String makeStatHtml(String title, String value) {
+        return "<html><div style='text-align:center;'><b>" + title + "</b><br><span style='font-size:17px;'>" + value + "</span></div></html>";
+    }
+
     public void loadSchedule() {
         tableModel.setRowCount(0);
-
         ArrayList<String[]> schedule = reportController.getDoctorSchedule();
         for (String[] row : schedule) {
             tableModel.addRow(row);
@@ -401,28 +488,20 @@ public class ReportPanel extends JPanel {
         updateResultsCount();
     }
 
-    /**
-     * Updates the "Last updated" timestamp.
-     */
     private void updateTimestamp() {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
         lastUpdatedLabel.setText("Last updated: " + now.format(formatter));
     }
 
-    /**
-     * Checks role access.
-     */
     private void checkRoleAccess() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
-
         if (currentUser == null) {
             showAccessDeniedDialog("Please login to view reports");
             return;
         }
 
         Role role = currentUser.getRole();
-
         if (role == Role.ADMIN || role == Role.RECEPTIONIST) {
             contentPanel.setVisible(true);
         } else {
@@ -431,31 +510,15 @@ public class ReportPanel extends JPanel {
         }
     }
 
-    /**
-     * Shows access denied pop-up.
-     */
     private void showAccessDeniedDialog(String message) {
         Window parentWindow = SwingUtilities.getWindowAncestor(this);
-        JOptionPane.showMessageDialog(
-                parentWindow,
-                message,
-                "Access Denied",
-                JOptionPane.ERROR_MESSAGE
-        );
+        JOptionPane.showMessageDialog(parentWindow, message, "Access Denied", JOptionPane.ERROR_MESSAGE);
     }
 
-    /**
-     * Prints the report.
-     */
     private void printReport() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         if (currentUser == null || !(currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.RECEPTIONIST)) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "You do not have permission to print reports.",
-                    "Access Denied",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this, "You do not have permission to print reports.", "Access Denied", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -468,12 +531,10 @@ public class ReportPanel extends JPanel {
                 if (pageIndex > 0) {
                     return Printable.NO_SUCH_PAGE;
                 }
-
                 Graphics2D g2d = (Graphics2D) graphics;
                 double scaleX = pageFormat.getImageableWidth() / printPanel.getWidth();
                 double scaleY = pageFormat.getImageableHeight() / printPanel.getHeight();
                 double scale = Math.min(scaleX, scaleY) * 0.95;
-
                 g2d.translate(
                         pageFormat.getImageableX() + (pageFormat.getImageableWidth() - printPanel.getWidth() * scale) / 2,
                         pageFormat.getImageableY() + (pageFormat.getImageableHeight() - printPanel.getHeight() * scale) / 2
@@ -483,119 +544,67 @@ public class ReportPanel extends JPanel {
                 return Printable.PAGE_EXISTS;
             });
 
-            boolean doPrint = job.printDialog();
-            if (doPrint) {
+            if (job.printDialog()) {
                 job.print();
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Report printed successfully!",
-                        "Print Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+                JOptionPane.showMessageDialog(this, "Report printed successfully!", "Print Success", JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (PrinterException e) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error printing report: " + e.getMessage(),
-                    "Print Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this, "Error printing report: " + e.getMessage(), "Print Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    /**
-     * Creates print panel.
-     */
     private JPanel createPrintPanel() {
         JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout(10, 10));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setSize(800, 1000);
 
         JLabel headerLabel = new JLabel("HOSPITAL MANAGEMENT SYSTEM", SwingConstants.CENTER);
+        headerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         headerLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        panel.add(headerLabel, BorderLayout.NORTH);
-
-        JPanel subHeaderPanel = new JPanel(new GridLayout(1, 3, 10, 5));
-        subHeaderPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        panel.add(headerLabel);
+        panel.add(Box.createVerticalStrut(10));
 
         JLabel reportLabel = new JLabel("REPORT: Doctor Schedules", SwingConstants.CENTER);
+        reportLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         reportLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        subHeaderPanel.add(reportLabel);
+        panel.add(reportLabel);
+        panel.add(Box.createVerticalStrut(8));
 
-        JLabel dateLabel = new JLabel(
-                "Date: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy")),
-                SwingConstants.CENTER
-        );
+        JLabel dateLabel = new JLabel("Generated: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")), SwingConstants.CENTER);
+        dateLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         dateLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        subHeaderPanel.add(dateLabel);
+        panel.add(dateLabel);
+        panel.add(Box.createVerticalStrut(15));
 
-        JLabel timeLabel = new JLabel(
-                "Time: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-                SwingConstants.CENTER
-        );
-        timeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        subHeaderPanel.add(timeLabel);
+        JLabel titleLabel = new JLabel(doctorScheduleTitleLabel.getText(), SwingConstants.CENTER);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        panel.add(titleLabel);
 
-        panel.add(subHeaderPanel, BorderLayout.NORTH);
-
-        // ★ Include doctor and patient info in print
-        String doctorTitle = doctorScheduleTitleLabel.getText();
-        String patientInfo = patientFilterDisplayLabel.isVisible() ? patientFilterDisplayLabel.getText() : "";
-
-        JPanel titlePrintPanel = new JPanel(new GridLayout(patientInfo.isEmpty() ? 1 : 2, 1, 0, 2));
-        JLabel doctorPrintLabel = new JLabel(doctorTitle, SwingConstants.CENTER);
-        doctorPrintLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        doctorPrintLabel.setForeground(new Color(0, 0, 139));
-        titlePrintPanel.add(doctorPrintLabel);
-
-        if (!patientInfo.isEmpty()) {
-            JLabel patientPrintLabel = new JLabel(patientInfo, SwingConstants.CENTER);
-            patientPrintLabel.setFont(new Font("Arial", Font.ITALIC, 12));
-            patientPrintLabel.setForeground(new Color(0, 102, 204));
-            titlePrintPanel.add(patientPrintLabel);
+        if (patientFilterDisplayLabel.isVisible()) {
+            JLabel patientLabel = new JLabel(patientFilterDisplayLabel.getText(), SwingConstants.CENTER);
+            patientLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            patientLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+            panel.add(patientLabel);
         }
-        panel.add(titlePrintPanel, BorderLayout.CENTER);
+        panel.add(Box.createVerticalStrut(12));
 
         JPanel summaryPrintPanel = new JPanel(new GridLayout(1, 4, 10, 5));
-        summaryPrintPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-        JLabel patientsPrintLabel = new JLabel(
-                "Patients: " + reportController.getTotalPatients(),
-                SwingConstants.CENTER
-        );
-        patientsPrintLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-        summaryPrintPanel.add(patientsPrintLabel);
-
-        JLabel totalPrintLabel = new JLabel(
-                "Total: " + reportController.getTotalAppointments(),
-                SwingConstants.CENTER
-        );
-        totalPrintLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-        summaryPrintPanel.add(totalPrintLabel);
-
-        JLabel scheduledPrintLabel = new JLabel(
-                "Scheduled: " + reportController.getTotalAppointmentsByStatus("SCHEDULED"),
-                SwingConstants.CENTER
-        );
-        scheduledPrintLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-        summaryPrintPanel.add(scheduledPrintLabel);
-
-        JLabel completedPrintLabel = new JLabel(
-                "Completed: " + reportController.getTotalAppointmentsByStatus("COMPLETED"),
-                SwingConstants.CENTER
-        );
-        completedPrintLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-        summaryPrintPanel.add(completedPrintLabel);
-
-        panel.add(summaryPrintPanel, BorderLayout.CENTER);
+        summaryPrintPanel.setMaximumSize(new Dimension(760, 45));
+        summaryPrintPanel.add(new JLabel("Patients: " + reportController.getTotalPatients(), SwingConstants.CENTER));
+        summaryPrintPanel.add(new JLabel("Total: " + reportController.getTotalAppointments(), SwingConstants.CENTER));
+        summaryPrintPanel.add(new JLabel("Scheduled: " + reportController.getTotalAppointmentsByStatus("SCHEDULED"), SwingConstants.CENTER));
+        summaryPrintPanel.add(new JLabel("Completed: " + reportController.getTotalAppointmentsByStatus("COMPLETED"), SwingConstants.CENTER));
+        panel.add(summaryPrintPanel);
+        panel.add(Box.createVerticalStrut(12));
 
         JPanel tablePrintPanel = new JPanel();
         tablePrintPanel.setLayout(new BoxLayout(tablePrintPanel, BoxLayout.Y_AXIS));
-        tablePrintPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        tablePrintPanel.setMaximumSize(new Dimension(760, 700));
 
-        JPanel headerRow = new JPanel(new GridLayout(1, 4, 5, 2));
-        headerRow.setBackground(Color.LIGHT_GRAY);
+        JPanel headerRow = new JPanel(new GridLayout(1, 4));
         String[] columns = {"Doctor", "Patient", "Date & Time", "Status"};
         for (String col : columns) {
             JLabel label = new JLabel(col, SwingConstants.CENTER);
@@ -606,7 +615,7 @@ public class ReportPanel extends JPanel {
         tablePrintPanel.add(headerRow);
 
         for (int i = 0; i < scheduleTable.getRowCount(); i++) {
-            JPanel dataRow = new JPanel(new GridLayout(1, 4, 5, 2));
+            JPanel dataRow = new JPanel(new GridLayout(1, 4));
             for (int j = 0; j < 4; j++) {
                 Object value = scheduleTable.getValueAt(i, j);
                 JLabel label = new JLabel(value != null ? value.toString() : "", SwingConstants.CENTER);
@@ -616,17 +625,7 @@ public class ReportPanel extends JPanel {
             }
             tablePrintPanel.add(dataRow);
         }
-
-        panel.add(tablePrintPanel, BorderLayout.CENTER);
-
-        JLabel footerLabel = new JLabel(
-                "Report generated on " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")),
-                SwingConstants.CENTER
-        );
-        footerLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-        footerLabel.setForeground(Color.GRAY);
-        panel.add(footerLabel, BorderLayout.SOUTH);
-
+        panel.add(tablePrintPanel);
         return panel;
     }
 
@@ -637,6 +636,34 @@ public class ReportPanel extends JPanel {
             checkRoleAccess();
             loadAllData();
             updateTimestamp();
+        }
+    }
+
+    private static class ScrollablePanel extends JPanel implements Scrollable {
+
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 16;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 80;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
         }
     }
 }
