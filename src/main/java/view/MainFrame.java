@@ -4,14 +4,9 @@ import java.awt.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 
 import controller.*;
 import model.Role;
@@ -34,18 +29,16 @@ public class MainFrame extends JFrame {
 
     // controllers — created once, injected into panels that need them
     // reason: one controller instance shared across the frame avoids duplicate DataStore calls
-    private AuthController authController;
-    private UserController userController;
+    private final AuthController authController;
+    private final UserController userController;
     private DoctorController doctorController;
-    private AppointmentController appointmentController;
-    private MedicalNoteController medicalNoteController;
+    private final AppointmentController appointmentController;
+    private final MedicalNoteController medicalNoteController;
 
     // panels owned by Member 1
     private LoginPanel loginPanel;
     private UserPanel userPanel;
 
-    // TODO: After all models completed
-    // placeholder panels for teammates' modules
     // reason: allows MainFrame to compile before teammates finish their panels
     private JPanel appointmentPanel;
     private JPanel patientPanel;
@@ -55,15 +48,13 @@ public class MainFrame extends JFrame {
 
     // reason: so onLoginSuccess() can show/hide them by role
     private JButton userMgmtBtn;
+    private JButton medicalNotesButton;
     private JButton refreshButton;
-
-    private Border borderDefault = new EmptyBorder(10, 15, 10, 15);
 
     public MainFrame() {
         // reason: controllers created here, injected into panels — panels never create controllers themselves
         this.authController = new AuthController();
         this.userController = new UserController();
-//        this.doctorController = new DoctorController();
         this.appointmentController = new AppointmentController();
         this.medicalNoteController = new MedicalNoteController();
             initComponents();
@@ -93,7 +84,7 @@ public class MainFrame extends JFrame {
         JButton appointmentsButton = new JButton("Appointments");
         JButton patientsButton = new JButton("Patients");
         JButton doctorsButton = new JButton("Doctors");
-        JButton medicalNotesButton = new JButton("Medical Notes");
+        medicalNotesButton = new JButton("Medical Notes");
         JButton reportsButton = new JButton("Reports");
         JButton logoutButton = new JButton("Logout");
         userMgmtBtn = new JButton("User Management");
@@ -101,32 +92,26 @@ public class MainFrame extends JFrame {
         refreshButton = new JButton("Refresh Data");
         refreshButton.setBackground(new Color(220, 220, 220));
 
-//        dashboardButton.setBorder(borderDefault);
-//        appointmentsButton.setBorder(borderDefault);
-//        patientsButton.setBorder(borderDefault);
-//        doctorsButton.setBorder(borderDefault);
-//        medicalNotesButton.setBorder(borderDefault);
-//        reportsButton.setBorder(borderDefault);
-//        userMgmtBtn.setBorder(borderDefault);
-//        logoutButton.setBorder(borderDefault);
-
-        dashboardButton.addActionListener(e -> showPanel("LOGIN"));
-        appointmentsButton.addActionListener(e -> showPanel("APPOINTMENTS"));
-        patientsButton.addActionListener(e -> showPanel("PATIENTS"));
-        doctorsButton.addActionListener(e -> showPanel("DOCTORS"));
-        medicalNotesButton.addActionListener(e -> showPanel("MEDICAL_NOTES"));
-        reportsButton.addActionListener(e -> showPanel("REPORTS"));
-        userMgmtBtn.addActionListener(e -> showPanel("USER_MANAGEMENT"));
-        logoutButton.addActionListener(e -> handleLogout());
+        dashboardButton.addActionListener(_ -> showPanel("LOGIN"));
+        appointmentsButton.addActionListener(_ -> showPanel("APPOINTMENTS"));
+        patientsButton.addActionListener(_ -> showPanel("PATIENTS"));
+        doctorsButton.addActionListener(_ -> showPanel("DOCTORS"));
+        medicalNotesButton.addActionListener(_ -> showPanel("MEDICAL_NOTES"));
+        reportsButton.addActionListener(_ -> showPanel("REPORTS"));
+        userMgmtBtn.addActionListener(_ -> showPanel("USER_MANAGEMENT"));
+        logoutButton.addActionListener(_ -> handleLogout());
 
         // Refresh button action listener to refresh data in the currently visible panel
-        refreshButton.addActionListener(e -> {
-            if (medicalNotePanel != null) {
-                ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
+        refreshButton.addActionListener(_ -> {
+            if (userPanel != null && userPanel.isVisible()) userPanel.setVisible(true);
+            if (patientPanel != null && patientPanel.isVisible()) patientPanel.setVisible(true);
+            if (doctorPanel != null && doctorPanel.isVisible()) doctorPanel.setVisible(true);
+            if (reportPanel != null && reportPanel.isVisible()) reportPanel.setVisible(true);
+            if (appointmentPanel != null && appointmentPanel.isVisible()) {
+                ((view.AppointmentPanel) appointmentPanel).refreshPanel();
             }
-
-            if (appointmentPanel != null) {
-                ((AppointmentPanel) appointmentPanel).refreshPanel();
+            if (medicalNotePanel != null && medicalNotePanel.isVisible()) {
+                ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
             }
 
             javax.swing.JOptionPane.showMessageDialog(this, "All system data has been refreshed!", "Refresh Success", 
@@ -194,7 +179,8 @@ public class MainFrame extends JFrame {
 
         navPanel.setVisible(true);
         userMgmtBtn.setVisible(user.getRole() == Role.ADMIN);
-
+        medicalNotesButton.setVisible(user.getRole() == Role.DOCTOR);
+        
         if (user.getRole() == Role.ADMIN) {
             showPanel("USER_MANAGEMENT");
         }
@@ -215,6 +201,13 @@ public class MainFrame extends JFrame {
     }
 
     public void showPanel(String name) {
+        if (name.equals("MEDICAL_NOTES")) {
+            if (medicalNotePanel == null) {
+                medicalNotePanel = new MedicalNotesPanel(appointmentController, medicalNoteController);
+                cardPanel.add(medicalNotePanel, "MEDICAL_NOTES");
+            }
+            ((MedicalNotesPanel) medicalNotePanel).refreshPanel();
+        }
         cardLayout.show(cardPanel, name);
     }
 }

@@ -36,6 +36,10 @@ public class PatientController {
             throw new IllegalArgumentException("Age must be between 0 and 125.");
         }
 
+        if (!Validator.isValidEmail(email)) {
+            throw new IllegalArgumentException("Invalid email format.");
+        }
+
         // generate a new patient id 
         String id = IDGenerator.generatePatientId();
 
@@ -48,7 +52,7 @@ public class PatientController {
         // add to the list in DataStore
         dataStore.getPatients().add(newPatient);
 
-        // save to json file
+        // save to JSON file
         dataStore.savePatients();
 
         return id;
@@ -64,8 +68,7 @@ public class PatientController {
         ArrayList<Patient> patients = dataStore.getPatients();
 
         // loop through all patients to find the matching one
-        for (int i = 0; i < patients.size(); i++) {
-            Patient p = patients.get(i);
+        for (Patient p : patients) {
             if (p.getPatientId().equals(patientId)) {
                 return p;
             }
@@ -81,8 +84,7 @@ public class PatientController {
         ArrayList<Patient> patients = dataStore.getPatients();
 
         // check each patient if name contains the keyword
-        for (int i = 0; i < patients.size(); i++) {
-            Patient p = patients.get(i);
+        for (Patient p : patients) {
             if (p.getName().toLowerCase().contains(keyword.toLowerCase())) {
                 results.add(p);
             }
@@ -109,6 +111,10 @@ public class PatientController {
             throw new IllegalArgumentException("Age must be between 0 and 125.");
         }
 
+        if (!Validator.isValidEmail(email)) {
+            throw new IllegalArgumentException("Invalid email format.");
+        }
+
         // find the patient and update their fields
         Patient p = getPatientById(patientId);
 
@@ -124,7 +130,7 @@ public class PatientController {
         p.setBloodType(bloodType);
         p.setMedicalHistory(medicalHistory);
 
-        // save changes to json file
+        // save changes to JSON file
         dataStore.savePatients();
     }
 

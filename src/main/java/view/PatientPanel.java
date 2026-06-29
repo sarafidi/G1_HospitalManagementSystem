@@ -10,39 +10,36 @@ import util.SessionManager;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
 public class PatientPanel extends JPanel {
-
-    PatientController patientController = new PatientController();
+    private final PatientController patientController = new PatientController();
 
     // table to show all patients
-    JTable patientTable;
-    DefaultTableModel tableModel;
+    private final JTable patientTable;
+    private final DefaultTableModel tableModel;
 
     // form input fields
-    JTextField tfName;
-    JTextField tfAge;
-    JTextField tfPhone;
-    JTextField tfEmail;
-    JTextField tfBloodType;
-    JTextField tfSearch;
-    JComboBox<Gender> cbGender;  
-    JTextArea taHistory;
+    private final JTextField tfName;
+    private final JTextField tfAge;
+    private final JTextField tfPhone;
+    private final JTextField tfEmail;
+    private final JTextField tfBloodType;
+    private final JTextField tfSearch;
+    private final JComboBox<Gender> cbGender;
+    private final JTextArea taHistory;
 
     // action buttons
-    JButton btnAdd;
-    JButton btnUpdate;
-    JButton btnDelete;
-    JButton btnClear;
-    JButton btnSearch;
+    private final JButton btnAdd;
+    private final JButton btnUpdate;
+    private final JButton btnDelete;
+    private final JButton btnClear;
+    private final JButton btnSearch;
 
     // stores the id of the patient currently selected in the table
-    String selectedPatientId = null;
+    private String selectedPatientId = null;
 
     //sets up the whole UI
     public PatientPanel() {
@@ -58,20 +55,12 @@ public class PatientPanel extends JPanel {
         JButton btnRefresh = new JButton("Show All");
 
         // search button
-        btnSearch.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleSearch();
-            }
-        });
+        btnSearch.addActionListener(_ -> handleSearch());
 
         // show all button clears search and reloads table
-        btnRefresh.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tfSearch.setText("");
-                loadTable();
-            }
+        btnRefresh.addActionListener(_ -> {
+            tfSearch.setText("");
+            loadTable();
         });
 
         topPanel.add(searchLabel);
@@ -188,33 +177,13 @@ public class PatientPanel extends JPanel {
         btnDelete = new JButton("Delete");
         btnClear = new JButton("Clear");
 
-        btnAdd.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleAdd();
-            }
-        });
+        btnAdd.addActionListener(_ -> handleAdd());
 
-        btnUpdate.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleUpdate();
-            }
-        });
+        btnUpdate.addActionListener(_ -> handleUpdate());
 
-        btnDelete.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleDelete();
-            }
-        });
+        btnDelete.addActionListener(_ -> handleDelete());
 
-        btnClear.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                clearForm();
-            }
-        });
+        btnClear.addActionListener(_ -> clearForm());
 
         JPanel btnPanel = new JPanel(new FlowLayout());
         btnPanel.add(btnAdd);
@@ -240,17 +209,16 @@ public class PatientPanel extends JPanel {
 
         ArrayList<Patient> patients = patientController.getAllPatients();
 
-        for (int i = 0; i < patients.size(); i++) {
-            Patient p = patients.get(i);
+        for (Patient p : patients) {
             tableModel.addRow(new Object[]{
-                p.getPatientId(),
-                p.getName(),
-                p.getAge(),
-                p.getGender(),   
-                p.getPhone(),
-                p.getEmail(),
-                p.getBloodType(),
-                p.getRegisteredDate()
+                    p.getPatientId(),
+                    p.getName(),
+                    p.getAge(),
+                    p.getGender(),
+                    p.getPhone(),
+                    p.getEmail(),
+                    p.getBloodType(),
+                    p.getRegisteredDate()
             });
         }
 
@@ -262,7 +230,7 @@ public class PatientPanel extends JPanel {
         String keyword = tfSearch.getText().trim();
 
         // if search box is empty just show all
-        if (keyword.equals("")) {
+        if (keyword.isEmpty()) {
             loadTable();
             return;
         }
@@ -271,17 +239,16 @@ public class PatientPanel extends JPanel {
 
         ArrayList<Patient> results = patientController.searchPatient(keyword);
 
-        for (int i = 0; i < results.size(); i++) {
-            Patient p = results.get(i);
+        for (Patient p : results) {
             tableModel.addRow(new Object[]{
-                p.getPatientId(),
-                p.getName(),
-                p.getAge(),
-                p.getGender(),
-                p.getPhone(),
-                p.getEmail(),
-                p.getBloodType(),
-                p.getRegisteredDate()
+                    p.getPatientId(),
+                    p.getName(),
+                    p.getAge(),
+                    p.getGender(),
+                    p.getPhone(),
+                    p.getEmail(),
+                    p.getBloodType(),
+                    p.getRegisteredDate()
             });
         }
     }
@@ -290,9 +257,7 @@ public class PatientPanel extends JPanel {
     private void populateForm(String patientId) {
         Patient p = patientController.getPatientById(patientId);
 
-        if (p == null) {
-            return;
-        }
+        if (p == null) return;
 
         // save selected id for use in update/delete
         selectedPatientId = patientId;
@@ -404,34 +369,19 @@ public class PatientPanel extends JPanel {
     // doctor role can only view
     public void checkRole() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            return;
-        }
-        Role role = currentUser.getRole();
+        Role role = currentUser != null ? currentUser.getRole() : null;
+        boolean canEdit = (role == Role.ADMIN || role == Role.RECEPTIONIST);
 
-        if (role == Role.DOCTOR) {
-            btnAdd.setVisible(false);
-            btnUpdate.setVisible(false);
-            btnDelete.setVisible(false);
-            tfName.setEditable(false);
-            tfAge.setEditable(false);
-            tfPhone.setEditable(false);
-            tfEmail.setEditable(false);
-            tfBloodType.setEditable(false);
-            taHistory.setEditable(false);
-            cbGender.setEnabled(false);
-        } else {
-            btnAdd.setVisible(true);
-            btnUpdate.setVisible(true);
-            btnDelete.setVisible(true);
-            tfName.setEditable(true);
-            tfAge.setEditable(true);
-            tfPhone.setEditable(true);
-            tfEmail.setEditable(true);
-            tfBloodType.setEditable(true);
-            taHistory.setEditable(true);
-            cbGender.setEnabled(true);
-        }
+        btnAdd.setVisible(canEdit);
+        btnUpdate.setVisible(canEdit);
+        btnDelete.setVisible(canEdit);
+        tfName.setEditable(canEdit);
+        tfAge.setEditable(canEdit);
+        tfPhone.setEditable(canEdit);
+        tfEmail.setEditable(canEdit);
+        tfBloodType.setEditable(canEdit);
+        taHistory.setEditable(canEdit);
+        cbGender.setEnabled(canEdit);
     }
 
     @Override

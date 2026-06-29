@@ -33,14 +33,16 @@ import javax.swing.table.DefaultTableModel;
 
 import controller.AppointmentController;
 import controller.MedicalNoteController;
-import model.AppStatus;
-import model.Appointment;
-import model.MedicalNote;
+import model.*;
+import util.IDGenerator;
+import util.SessionManager;
+
+import static util.UIConfig.*;
 
 public class MedicalNotesPanel extends JPanel {
     private AppointmentController apptController;
     private MedicalNoteController notesController;
-    private String currentDocId = "DOC-0002";
+    private User currUser;
 
     // Components
     private JComboBox<String> comboApptId;
@@ -189,7 +191,7 @@ public class MedicalNotesPanel extends JPanel {
         btnUpdate = new JButton("Update");
         btnUpdate.setBackground(new Color(30, 144, 255)); btnUpdate.setForeground(Color.WHITE);
         
-        btnSubmit = new JButton("Submit");
+        btnSubmit = new JButton("Create new Medical Note");
         btnSubmit.setBackground(new Color(46, 139, 87)); btnSubmit.setForeground(Color.WHITE);
         
         btnPanel.add(btnUpdate); btnPanel.add(btnSubmit);
@@ -214,12 +216,13 @@ public class MedicalNotesPanel extends JPanel {
                 
                 if (column == 3 && value != null) { 
                     String status = value.toString();
-                    if (status.equalsIgnoreCase("SCHEDULED")) {
-                        c.setBackground(new Color(255, 239, 150)); c.setForeground(Color.BLACK);
-                    } else if (status.equalsIgnoreCase("COMPLETED")) {
-                        c.setBackground(new Color(175, 238, 175)); c.setForeground(Color.BLACK);
-                    } else if (status.equalsIgnoreCase("CANCELLED")) {
-                        c.setBackground(new Color(255, 182, 193)); c.setForeground(Color.BLACK);
+
+                    if (status.equalsIgnoreCase(AppStatus.SCHEDULED.toString())) {
+                        STATUS_SCHEDULED(c);
+                    } else if (status.equalsIgnoreCase(AppStatus.CONFIRMED.toString())) {
+                        STATUS_COMPLETED(c);
+                    } else if (status.equalsIgnoreCase(AppStatus.CANCELLED.toString())) {
+                        STATUS_CANCELLED(c);
                     }
                 } else {
                     if (isSelected) {
@@ -243,7 +246,6 @@ public class MedicalNotesPanel extends JPanel {
 
         // Listeners and Validation
         lockFixedFields();
-        loadDoctorAppointments();
 
         comboApptId.addActionListener(e -> {
             String selectedId = (String) comboApptId.getSelectedItem();
@@ -313,6 +315,7 @@ public class MedicalNotesPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Medical note updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshPanel();
         });
+        loadDoctorAppointments();
     }
 
     private boolean validateOAP() {
@@ -338,6 +341,7 @@ public class MedicalNotesPanel extends JPanel {
     private void handleAppointmentSelection(String apptId) {
         if (apptId == null || apptId.isEmpty()) {
             setFormEnabled(true);
+            clearForm();
             return;
         }
 
@@ -356,19 +360,36 @@ public class MedicalNotesPanel extends JPanel {
 
             MedicalNote oldNote = notesController.getNoteByAppointmentId(apptId);
             if (oldNote != null) {
-                txtO.setText(oldNote.getObjective()); txtO.setForeground(Color.BLACK); txtO.setFont(new Font("sansserif", Font.PLAIN, 12));
-                txtA.setText(oldNote.getAssessment()); txtA.setForeground(Color.BLACK); txtA.setFont(new Font("sansserif", Font.PLAIN, 12));
-                txtP.setText(oldNote.getPlan()); txtP.setForeground(Color.BLACK); txtP.setFont(new Font("sansserif", Font.PLAIN, 12));
-                radReqMc.setSelected(oldNote.isRequireMc());
-                radReqFollow.setSelected(oldNote.isFollowUpNeeded());
+                txtO.setText(oldNote.getObjective()); txtO.setForeground(Color.BLACK); txtO.setFont(new Font(DEF_FONT_FAMILY, Font.PLAIN, DEF_FONT_SIZE_NORMAL));
+                txtA.setText(oldNote.getAssessment()); txtA.setForeground(Color.BLACK); txtA.setFont(new Font(DEF_FONT_FAMILY, Font.PLAIN, DEF_FONT_SIZE_NORMAL));
+                txtP.setText(oldNote.getPlan()); txtP.setForeground(Color.BLACK); txtP.setFont(new Font(DEF_FONT_FAMILY, Font.PLAIN, DEF_FONT_SIZE_NORMAL));
+                
+                if (oldNote.isRequireMc()) {
+                    radReqMc.setSelected(true);
+                } else {
+                    radNoMc.setSelected(true);
+                }
+                
+                if (oldNote.isFollowUpNeeded()) {
+                    radReqFollow.setSelected(true);
+                } else {
+                    radNoFollow.setSelected(true);
+                }
+                
                 chkReferral.setSelected(oldNote.isReferralNeeded());
                 chkUrgent.setSelected(oldNote.isUrgentCase());
                 chkLabTest.setSelected(oldNote.isLabTestOrdered());
             } else {
+                radNoMc.setSelected(true);
+                radNoFollow.setSelected(true);
+                chkReferral.setSelected(false);
+                chkUrgent.setSelected(false);
+                chkLabTest.setSelected(false);
+
                 if (appt.getStatus() == AppStatus.CANCELLED) {
-                    txtO.setText("  - No Record -"); txtO.setForeground(Color.BLACK); txtO.setFont(new Font("sansserif", Font.PLAIN, 12));
-                    txtA.setText("  - No Record -"); txtA.setForeground(Color.BLACK); txtA.setFont(new Font("sansserif", Font.PLAIN, 12));
-                    txtP.setText("  - No Record -"); txtP.setForeground(Color.BLACK); txtP.setFont(new Font("sansserif", Font.PLAIN, 12));
+                    txtO.setText("  - No Record -"); txtO.setForeground(Color.BLACK); txtO.setFont(new Font(DEF_FONT_FAMILY, Font.PLAIN, DEF_FONT_SIZE_NORMAL));
+                    txtA.setText("  - No Record -"); txtA.setForeground(Color.BLACK); txtA.setFont(new Font(DEF_FONT_FAMILY, Font.PLAIN, DEF_FONT_SIZE_NORMAL));
+                    txtP.setText("  - No Record -"); txtP.setForeground(Color.BLACK); txtP.setFont(new Font(DEF_FONT_FAMILY, Font.PLAIN, DEF_FONT_SIZE_NORMAL));
                 } else {
                     setupPlaceholder(txtO, hintO);
                     setupPlaceholder(txtA, hintA);
@@ -426,11 +447,16 @@ public class MedicalNotesPanel extends JPanel {
         comboApptId.addItem("");
         tableModel.setRowCount(0);
 
+        currUser = SessionManager.getInstance().getCurrentUser();
+        if (currUser == null) return;
+
         List<Appointment> list = apptController.getAllAppointments();
         list.sort((a1, a2) -> a1.getAppointmentId().compareTo(a2.getAppointmentId()));
 
+        boolean isDoctor = currUser.getRole() == Role.DOCTOR;
+
         for (Appointment appt : list) {
-            if (appt.getDoctorId().equalsIgnoreCase(currentDocId)) {
+            if (!isDoctor || appt.getDoctorId().equalsIgnoreCase(currUser.getDoctorId())) {
                 comboApptId.addItem(appt.getAppointmentId());
                 Object[] row = {appt.getAppointmentId(), appt.getPatientId(), appt.getAppointmentDateTime(), appt.getStatus().toString()};
                 tableModel.addRow(row);
@@ -440,16 +466,18 @@ public class MedicalNotesPanel extends JPanel {
 
     private MedicalNote createNoteFromForm(String apptId) {
         return new MedicalNote(
-            "NOTE-" + String.format("%04d", (System.currentTimeMillis() % 10000)),
-            apptId, txtPatientId.getText(), txtDocId.getText(),
-            txtS.getText(), txtO.getText(), txtA.getText(), txtP.getText(),
-            radReqMc.isSelected(), radReqFollow.isSelected(),
-            chkReferral.isSelected(), chkUrgent.isSelected(), chkLabTest.isSelected()
+                IDGenerator.generateNoteId(),
+                apptId, txtPatientId.getText(), txtDocId.getText(),
+                txtS.getText(), txtO.getText(), txtA.getText(), txtP.getText(),
+                radReqMc.isSelected(), radReqFollow.isSelected(),
+                chkReferral.isSelected(), chkUrgent.isSelected(), chkLabTest.isSelected()
         );
     }
 
     private void clearForm() {
-        comboApptId.setSelectedIndex(0);
+        if (comboApptId.getItemCount() > 0) {
+            comboApptId.setSelectedIndex(0);
+        }
         txtDocId.setText(""); txtPatientId.setText(""); txtDateTime.setText(""); txtS.setText("");
         txtO.setText(""); txtA.setText(""); txtP.setText("");
         radNoMc.setSelected(true); radNoFollow.setSelected(true);
@@ -458,26 +486,26 @@ public class MedicalNotesPanel extends JPanel {
     }
 
     private void setupPlaceholder(JTextArea textArea, String hint) {
-        textArea.setText(hint); 
+        textArea.setText(hint);
         textArea.setForeground(Color.GRAY);
-        textArea.setFont(new Font("sansserif", Font.ITALIC, 12)); 
-        
-        for (java.awt.event.FocusListener fl : textArea.getFocusListeners()) { textArea.removeFocusListener(fl); }
+        textArea.setFont(new Font(DEF_FONT_FAMILY, Font.ITALIC, DEF_FONT_SIZE_NORMAL));
+
+        for (FocusListener fl : textArea.getFocusListeners()) { textArea.removeFocusListener(fl); }
         textArea.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
                 if (textArea.getText().equals(hint)) {
-                    textArea.setText(""); 
+                    textArea.setText("");
                     textArea.setForeground(Color.BLACK);
-                    textArea.setFont(new Font("sansserif", Font.PLAIN, 12)); 
+                    textArea.setFont(new Font(DEF_FONT_FAMILY, Font.PLAIN, DEF_FONT_SIZE_NORMAL));
                 }
             }
             @Override
             public void focusLost(FocusEvent e) {
                 if (textArea.getText().trim().isEmpty()) {
-                    textArea.setText(hint); 
+                    textArea.setText(hint);
                     textArea.setForeground(Color.GRAY);
-                    textArea.setFont(new Font("sansserif", Font.ITALIC, 12)); 
+                    textArea.setFont(new Font(DEF_FONT_FAMILY, Font.ITALIC, DEF_FONT_SIZE_NORMAL));
                 }
             }
         });

@@ -1,41 +1,44 @@
 package controller;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import model.MedicalNote;
+import util.DataStore;
 
 public class MedicalNoteController {
-    private List<MedicalNote> notesList;
-
-    public MedicalNoteController() {
-        this.notesList = new ArrayList<>();
-    }
+    private final DataStore dataStore = DataStore.getInstance();
 
     // Save or update a medical note
     public void submitMedicalNote(MedicalNote note) {
+        List<MedicalNote> notesList = dataStore.getMedicalNotes();
         notesList.removeIf(n -> n.getAppointmentId().equals(note.getAppointmentId()));
-        notesList.add(note);        
+        notesList.add(note);
+        dataStore.saveMedicalNotes();
     }
 
     // Update an existing medical note
     public void updateMedicalNote(MedicalNote note) {
+        List<MedicalNote> notesList = dataStore.getMedicalNotes();
         for (int i = 0; i < notesList.size(); i++) {
             if (notesList.get(i).getAppointmentId().equals(note.getAppointmentId())) {
                 notesList.set(i, note);
                 break;
             }
         }
+        note.setUpdatedAt(LocalDateTime.now());
+        dataStore.saveMedicalNotes();
     }
 
     // Retrieve all medical notes
+    @SuppressWarnings("unused")
     public List<MedicalNote> getAllMedicalNotes() {
-        return notesList;
+        return dataStore.getMedicalNotes();
     }
 
     // Retrieve a medical note by appointment ID
     public MedicalNote getNoteByAppointmentId(String apptId) {
-        for (MedicalNote note : notesList) {
+        for (MedicalNote note : dataStore.getMedicalNotes()) {
             if (note.getAppointmentId().equals(apptId)) {
                 return note;
             }

@@ -1,14 +1,11 @@
 package view;
 
-import controller.AuthController;
 import controller.DoctorController;
 import controller.UserController;
 import model.Role;
 import model.User;
-import util.DataStore;
 import util.SessionManager;
 
-import javax.print.Doc;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -16,15 +13,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static util.UIConfig.*;
 
 public class UserPanel extends JPanel implements MouseListener {
     // reason: panel never touches DataStore directly
-    private UserController userController;
-    private DoctorController doctorController;
-    private Runnable onLogout;
+    private final UserController userController;
+    private final DoctorController doctorController;
+    private final Runnable onLogout;
 
     // JTable — displays all users in rows and columns
     // reason: best Swing component for tabular data display
@@ -51,7 +47,7 @@ public class UserPanel extends JPanel implements MouseListener {
     private String selectedUserId;
 
     // tracks user's active status button
-    JButton deactivateUserButton;
+    private JButton deactivateUserButton;
 
     public UserPanel(UserController userController, DoctorController doctorController, Runnable onLogout) {
         this.userController = userController;
@@ -103,7 +99,7 @@ public class UserPanel extends JPanel implements MouseListener {
 
         // reason: Role.values() returns all enum constants automatically
         roleComboBox = new JComboBox<>(Role.values());
-        roleComboBox.addActionListener(e -> {
+        roleComboBox.addActionListener(_ -> {
                 Role selectedRole = (Role) roleComboBox.getSelectedItem();
                 if (selectedRole == Role.DOCTOR) {
                     doctorIdField.setText(util.IDGenerator.generateDoctorId());
@@ -138,10 +134,10 @@ public class UserPanel extends JPanel implements MouseListener {
         JButton forcePasswordChangeButton = new JButton("Force Password Change");
         JButton deleteUserButton = new JButton("Delete User");
 
-        addUserButton.addActionListener(e -> handleAddUser());
-        deactivateUserButton.addActionListener(e -> handleDeactivate());
-        forcePasswordChangeButton.addActionListener(e -> handleForcePasswordChange());
-        deleteUserButton.addActionListener(e -> handleDeleteUser());
+        addUserButton.addActionListener(_ -> handleAddUser());
+        deactivateUserButton.addActionListener(_ -> handleDeactivate());
+        forcePasswordChangeButton.addActionListener(_ -> handleForcePasswordChange());
+        deleteUserButton.addActionListener(_ -> handleDeleteUser());
 
         buttonPanel.add(addUserButton);
         buttonPanel.add(deactivateUserButton);
@@ -164,7 +160,7 @@ public class UserPanel extends JPanel implements MouseListener {
         usernameField.setText((String) tableModel.getValueAt(row, 1));
         nameField.setText((String) tableModel.getValueAt(row, 2));
         doctorIdField.setText((String) tableModel.getValueAt(row, 5));
-        roleComboBox.setSelectedItem((Role) tableModel.getValueAt(row, 3));
+        roleComboBox.setSelectedItem(tableModel.getValueAt(row, 3));
         String status = tableModel.getValueAt(userTable.getSelectedRow(), 4).toString();
 
         if (status.equalsIgnoreCase("active")) {
@@ -206,7 +202,6 @@ public class UserPanel extends JPanel implements MouseListener {
             messageLabel.setText("User added successfully!");
             messageLabel.setForeground(COLOR_SUCCESS);
             messageLabel.setFont(new Font(DEF_FONT_FAMILY, Font.BOLD, DEF_FONT_SIZE_LABEL));
-            DataStore.getInstance().saveUsers();
             refreshTable();
             clearForm();
         }
@@ -256,7 +251,7 @@ public class UserPanel extends JPanel implements MouseListener {
                 ).createDialog(this, "Success");
 
                 // initialize background timer to kill dialog box
-                Timer timer = new Timer(2000, e -> {
+                Timer timer = new Timer(2000, _ -> {
                     if (autoCloseDialog.isVisible()) autoCloseDialog.dispose();
                 });
                 timer.setRepeats(false);
@@ -355,4 +350,13 @@ public class UserPanel extends JPanel implements MouseListener {
 
     @Override
     public void mouseExited(MouseEvent e) { }
+
+    @Override
+    public void setVisible(boolean aFlag) {
+        super.setVisible(aFlag);
+        if (aFlag) {
+            refreshTable();
+            clearForm();
+        }
+    }
 }

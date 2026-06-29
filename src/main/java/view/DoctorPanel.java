@@ -10,40 +10,37 @@ import util.SessionManager;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
 public class DoctorPanel extends JPanel {
 
-    // handle all doctor data operations
-    DoctorController doctorController = new DoctorController();
+    private final DoctorController doctorController = new DoctorController();
 
     // table to show all doctors
-    JTable doctorTable;
-    DefaultTableModel tableModel;
+    private final JTable doctorTable;
+    private final DefaultTableModel tableModel;
 
     // form input fields
-    JTextField tfName;
-    JTextField tfAge;
-    JTextField tfPhone;
-    JTextField tfEmail;
-    JTextField tfSpecialization;
-    JTextField tfLicenseNo;
-    JTextField tfDepartment;
-    JTextField tfSearch;
-    JComboBox<Gender> cbGender;  // uses Gender enum from model package
+    private final JTextField tfName;
+    private final JTextField tfAge;
+    private final JTextField tfPhone;
+    private final JTextField tfEmail;
+    private final JTextField tfSpecialization;
+    private final JTextField tfLicenseNo;
+    private final JTextField tfDepartment;
+    private final JTextField tfSearch;
+    private final JComboBox<Gender> cbGender;  // uses Gender enum from model package
 
     // action buttons
-    JButton btnAdd;
-    JButton btnUpdate;
-    JButton btnDelete;
-    JButton btnClear;
+    private final JButton btnAdd;
+    private final JButton btnUpdate;
+    private final JButton btnDelete;
+    private final JButton btnClear;
 
     // stores the id of the doctor currently selected in the table
-    String selectedDoctorId = null;
+    private String selectedDoctorId = null;
 
     // sets up the whole UI
     public DoctorPanel() {
@@ -58,19 +55,11 @@ public class DoctorPanel extends JPanel {
         JButton btnSearch = new JButton("Search");
         JButton btnRefresh = new JButton("Show All");
 
-        btnSearch.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleSearch();
-            }
-        });
+        btnSearch.addActionListener(_ -> handleSearch());
 
-        btnRefresh.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tfSearch.setText("");
-                loadTable();
-            }
+        btnRefresh.addActionListener(_ -> {
+            tfSearch.setText("");
+            loadTable();
         });
 
         topPanel.add(searchLabel);
@@ -187,33 +176,13 @@ public class DoctorPanel extends JPanel {
         btnDelete = new JButton("Delete");
         btnClear = new JButton("Clear");
 
-        btnAdd.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleAdd();
-            }
-        });
+        btnAdd.addActionListener(_ -> handleAdd());
 
-        btnUpdate.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleUpdate();
-            }
-        });
+        btnUpdate.addActionListener(_ -> handleUpdate());
 
-        btnDelete.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleDelete();
-            }
-        });
+        btnDelete.addActionListener(_ -> handleDelete());
 
-        btnClear.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                clearForm();
-            }
-        });
+        btnClear.addActionListener(_ -> clearForm());
 
         JPanel btnPanel = new JPanel(new FlowLayout());
         btnPanel.add(btnAdd);
@@ -299,8 +268,19 @@ public class DoctorPanel extends JPanel {
         tfDepartment.setText(d.getDepartment());
     }
 
+    // verify if current user has admin role
+    private boolean checkAdminPermission() {
+        User currentUser = SessionManager.getInstance().getCurrentUser();
+        if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
+            JOptionPane.showMessageDialog(this, "Only Admin is allowed to perform this action.", "Permission Denied", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
     // handle clicking Add button
     private void handleAdd() {
+        if (!checkAdminPermission()) return;
         try {
             int age = Integer.parseInt(tfAge.getText().trim());
             Gender gender = (Gender) cbGender.getSelectedItem();
@@ -328,6 +308,7 @@ public class DoctorPanel extends JPanel {
 
     // handle clicking Update button
     private void handleUpdate() {
+        if (!checkAdminPermission()) return;
         if (selectedDoctorId == null) {
             JOptionPane.showMessageDialog(this, "Please select a doctor from the table first.");
             return;
@@ -363,6 +344,7 @@ public class DoctorPanel extends JPanel {
 
     // handle clicking Delete button
     private void handleDelete() {
+        if (!checkAdminPermission()) return;
         if (selectedDoctorId == null) {
             JOptionPane.showMessageDialog(this, "Please select a doctor from the table first.");
             return;
@@ -398,34 +380,20 @@ public class DoctorPanel extends JPanel {
     // only admin can add, update, delete doctors
     public void checkRole() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
-        if (currentUser == null) return;
-        Role role = currentUser.getRole();
+        Role role = currentUser != null ? currentUser.getRole() : null;
+        boolean isAdmin = (role == Role.ADMIN);
 
-        if (role != Role.ADMIN) {
-            btnAdd.setVisible(false);
-            btnUpdate.setVisible(false);
-            btnDelete.setVisible(false);
-            tfName.setEditable(false);
-            tfAge.setEditable(false);
-            tfPhone.setEditable(false);
-            tfEmail.setEditable(false);
-            tfSpecialization.setEditable(false);
-            tfLicenseNo.setEditable(false);
-            tfDepartment.setEditable(false);
-            cbGender.setEnabled(false);
-        } else {
-            btnAdd.setVisible(true);
-            btnUpdate.setVisible(true);
-            btnDelete.setVisible(true);
-            tfName.setEditable(true);
-            tfAge.setEditable(true);
-            tfPhone.setEditable(true);
-            tfEmail.setEditable(true);
-            tfSpecialization.setEditable(true);
-            tfLicenseNo.setEditable(true);
-            tfDepartment.setEditable(true);
-            cbGender.setEnabled(true);
-        }
+        btnAdd.setVisible(isAdmin);
+        btnUpdate.setVisible(isAdmin);
+        btnDelete.setVisible(isAdmin);
+        tfName.setEditable(isAdmin);
+        tfAge.setEditable(isAdmin);
+        tfPhone.setEditable(isAdmin);
+        tfEmail.setEditable(isAdmin);
+        tfSpecialization.setEditable(isAdmin);
+        tfLicenseNo.setEditable(isAdmin);
+        tfDepartment.setEditable(isAdmin);
+        cbGender.setEnabled(isAdmin);
     }
 
     @Override
