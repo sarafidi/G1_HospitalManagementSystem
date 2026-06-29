@@ -25,5 +25,14 @@
     "status": "SCHEDULED",
     "notes": "Fever",
     "createdAt": "2026-06-29T09:47:59.5414122"
+  },
+  {
+    "appointmentId": "APT-6503",
+    "patientId": "PAT-0004",
+    "doctorId": "DOC-0001",
+    "appointmentDateTime": "2026-06-29 11:30",
+    "status": "SCHEDULED",
+    "notes": "Denggi",
+    "createdAt": "2026-06-29T10:33:46.5083813"
   }
 ]
