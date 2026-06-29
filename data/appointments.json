@@ -1,0 +1,29 @@
+[
+  {
+    "appointmentId": "APT-5468",
+    "patientId": "PAT-0003",
+    "doctorId": "DOC-0003",
+    "appointmentDateTime": "2026-06-29 11:30",
+    "status": "SCHEDULED",
+    "notes": "Knee pain",
+    "createdAt": "2026-06-29T04:11:25.4683292"
+  },
+  {
+    "appointmentId": "APT-8125",
+    "patientId": "PAT-0001",
+    "doctorId": "DOC-0001",
+    "appointmentDateTime": "2026-06-29 09:00",
+    "status": "CANCELLED",
+    "notes": "Heart attack [CANCELLED REASON: Already transport to hospital]",
+    "createdAt": "2026-06-29T09:11:55.8336168"
+  },
+  {
+    "appointmentId": "APT-8126",
+    "patientId": "PAT-0002",
+    "doctorId": "DOC-0003",
+    "appointmentDateTime": "2026-06-29 11:00",
+    "status": "SCHEDULED",
+    "notes": "Fever",
+    "createdAt": "2026-06-29T09:47:59.5414122"
+  }
+]

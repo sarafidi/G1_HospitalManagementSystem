@@ -1,0 +1,33 @@
+[
+  {
+    "doctorId": "DOC-0001",
+    "specialization": "Ortho",
+    "licenseNo": "LIC-12312",
+    "department": "Orthopedic",
+    "name": "nikki8",
+    "age": 0,
+    "gender": "FEMALE",
+    "phone": "0987882423",
+    "email": "nikki8@gmail.com"
+  },
+  {
+    "doctorId": "DOC-0002",
+    "specialization": "-",
+    "licenseNo": "-",
+    "department": "-",
+    "name": "nikki13",
+    "age": 0,
+    "phone": "0986788888",
+    "email": "nikki13@gmail.com"
+  },
+  {
+    "doctorId": "DOC-0003",
+    "specialization": "-",
+    "licenseNo": "-",
+    "department": "-",
+    "name": "nikki14",
+    "age": 0,
+    "phone": "0989878787",
+    "email": "nikki14@gmail.com"
+  }
+]
