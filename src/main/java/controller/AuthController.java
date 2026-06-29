@@ -6,7 +6,7 @@ import util.DataStore;
 import util.SessionManager;
 
 public class AuthController {
-    private ArrayList<User> users = DataStore.getInstance().getUsers();
+    private final ArrayList<User> users = DataStore.getInstance().getUsers();
 
     public User login(String username, String password) {
         User currUser = findByUsername(username);

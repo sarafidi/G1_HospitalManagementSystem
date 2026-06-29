@@ -27,6 +27,13 @@ public class ReportController {
     }
 
     /**
+     * Returns total number of doctors.
+     */
+    public int getTotalDoctors() {
+        return dataStore.getDoctors().size();
+    }
+
+    /**
      * Returns total number of appointments.
      */
     public int getTotalAppointments() {
@@ -49,6 +56,97 @@ public class ReportController {
         return (int) dataStore.getAppointments().stream()
                 .filter(a -> a.getDoctorId().equals(doctorId))
                 .count();
+    }
+
+    /**
+     * Returns filtered total appointments by status based on filter criteria.
+     */
+    public int getFilteredTotalAppointmentsByStatus(String status, String doctorId, String period) {
+        ArrayList<Appointment> filtered = new ArrayList<>(dataStore.getAppointments());
+
+        // Filter by doctor
+        if (doctorId != null && !doctorId.isEmpty()) {
+            filtered = filtered.stream()
+                    .filter(a -> a.getDoctorId().equals(doctorId))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        // Filter by period
+        if (period != null && !period.isEmpty() && !period.equals("All")) {
+            LocalDateTime now = LocalDateTime.now();
+            filtered = filtered.stream()
+                    .filter(a -> {
+                        LocalDateTime apptTime = parseDateTime(a.getAppointmentDateTime());
+                        if (apptTime == null) {
+                            return false;
+                        }
+                        switch (period) {
+                            case "Today":
+                                return apptTime.toLocalDate().equals(now.toLocalDate());
+                            case "This Week":
+                                return apptTime.isAfter(now.minusDays(7));
+                            case "This Month":
+                                return apptTime.getMonth().equals(now.getMonth())
+                                        && apptTime.getYear() == now.getYear();
+                            case "Past":
+                                return apptTime.isBefore(now);
+                            case "Upcoming":
+                                return apptTime.isAfter(now);
+                            default:
+                                return true;
+                        }
+                    })
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        // Filter by status
+        return (int) filtered.stream()
+                .filter(a -> a.getStatus().toString().equals(status))
+                .count();
+    }
+
+    /**
+     * Returns filtered total appointments based on filter criteria.
+     */
+    public int getFilteredTotalAppointments(String doctorId, String period) {
+        ArrayList<Appointment> filtered = new ArrayList<>(dataStore.getAppointments());
+
+        // Filter by doctor
+        if (doctorId != null && !doctorId.isEmpty()) {
+            filtered = filtered.stream()
+                    .filter(a -> a.getDoctorId().equals(doctorId))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        // Filter by period
+        if (period != null && !period.isEmpty() && !period.equals("All")) {
+            LocalDateTime now = LocalDateTime.now();
+            filtered = filtered.stream()
+                    .filter(a -> {
+                        LocalDateTime apptTime = parseDateTime(a.getAppointmentDateTime());
+                        if (apptTime == null) {
+                            return false;
+                        }
+                        switch (period) {
+                            case "Today":
+                                return apptTime.toLocalDate().equals(now.toLocalDate());
+                            case "This Week":
+                                return apptTime.isAfter(now.minusDays(7));
+                            case "This Month":
+                                return apptTime.getMonth().equals(now.getMonth())
+                                        && apptTime.getYear() == now.getYear();
+                            case "Past":
+                                return apptTime.isBefore(now);
+                            case "Upcoming":
+                                return apptTime.isAfter(now);
+                            default:
+                                return true;
+                        }
+                    })
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
+        return filtered.size();
     }
 
     /**
@@ -107,18 +205,18 @@ public class ReportController {
                         }
                         switch (period) {
                             case "Today":
-                                return apptTime.toLocalDate().equals(now.toLocalDate());
+                                    return apptTime.toLocalDate().equals(now.toLocalDate());
                             case "This Week":
-                                return apptTime.isAfter(now.minusDays(7));
+                                    return apptTime.isAfter(now.minusDays(7));
                             case "This Month":
-                                return apptTime.getMonth().equals(now.getMonth())
-                                        && apptTime.getYear() == now.getYear();
+                                    return apptTime.getMonth().equals(now.getMonth())
+                                            && apptTime.getYear() == now.getYear();
                             case "Past":
-                                return apptTime.isBefore(now);
+                                    return apptTime.isBefore(now);
                             case "Upcoming":
-                                return apptTime.isAfter(now);
+                                    return apptTime.isAfter(now);
                             default:
-                                return true;
+                                    return true;
                         }
                     })
                     .collect(Collectors.toCollection(ArrayList::new));

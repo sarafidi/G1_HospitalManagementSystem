@@ -1,15 +1,14 @@
 package controller;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import model.MedicalNote;
 import util.DataStore;
 
 public class MedicalNoteController {
-    private DataStore dataStore = DataStore.getInstance();
-    private List<MedicalNote> notesList = dataStore.getMedicalNotes();
+    private final DataStore dataStore = DataStore.getInstance();
+    private final List<MedicalNote> notesList = dataStore.getMedicalNotes();
 
     // Save or update a medical note
     public void submitMedicalNote(MedicalNote note) {
@@ -31,6 +30,7 @@ public class MedicalNoteController {
     }
 
     // Retrieve all medical notes
+    @SuppressWarnings("unused")
     public List<MedicalNote> getAllMedicalNotes() {
         return notesList;
     }
