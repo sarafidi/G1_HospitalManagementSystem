@@ -72,4 +72,15 @@ public class AppointmentController {
             }
         }
     }
+
+    // Get list of active doctor IDs
+    public List<String> getActiveDoctorIds() {
+        List<String> doctorIds = new ArrayList<>();
+        for (User u : dataStore.getUsers()) {
+            if (u.getRole() == Role.DOCTOR && u.isActive()) {
+                doctorIds.add(u.getDoctorId());
+            }
+        }
+        return doctorIds;
+    }
 }

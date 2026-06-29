@@ -36,7 +36,7 @@ import static util.UIConfig.*;
 public class AppointmentPanel extends JPanel {
 
     private final AppointmentController controller = new AppointmentController();
-    private DataStore dataStore = DataStore.getInstance();
+    private final DataStore dataStore = DataStore.getInstance();
     private String isDoctorLoggedIn;
 
     // UI Components - Form Fields
@@ -81,7 +81,7 @@ public class AppointmentPanel extends JPanel {
             gbc.gridx = 1;
             txtPatientId = new JComboBox<>();
             txtPatientId.setEditable(true);
-            // Populate with all active doctors
+            // Populate with all patients
             for (Patient p : dataStore.getPatients()) {
                 txtPatientId.addItem(p.getPatientId());
             }
@@ -567,11 +567,9 @@ public class AppointmentPanel extends JPanel {
             filterDoctorCombo.removeAllItems();
             filterDoctorCombo.addItem(""); // add blank for "All"
 
-            for (User u : dataStore.getUsers()) {
-                if (u.getRole() == Role.DOCTOR && u.isActive()) {
-                    txtDoctorId.addItem(u.getDoctorId());
-                    filterDoctorCombo.addItem(u.getDoctorId());
-                }
+            for (String docId : controller.getActiveDoctorIds()) {
+                txtDoctorId.addItem(docId);
+                filterDoctorCombo.addItem(docId);
             }
         }
     }

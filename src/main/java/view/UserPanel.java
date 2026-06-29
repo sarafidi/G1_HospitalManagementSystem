@@ -5,7 +5,6 @@ import controller.DoctorController;
 import controller.UserController;
 import model.Role;
 import model.User;
-import util.DataStore;
 import util.SessionManager;
 
 import javax.print.Doc;
@@ -206,7 +205,6 @@ public class UserPanel extends JPanel implements MouseListener {
             messageLabel.setText("User added successfully!");
             messageLabel.setForeground(COLOR_SUCCESS);
             messageLabel.setFont(new Font(DEF_FONT_FAMILY, Font.BOLD, DEF_FONT_SIZE_LABEL));
-            DataStore.getInstance().saveUsers();
             refreshTable();
             clearForm();
         }
